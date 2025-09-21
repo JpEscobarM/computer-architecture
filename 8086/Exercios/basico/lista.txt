@@ -1,0 +1,20 @@
+1. Faça uma rotina que escreva um número de 16 bits sem sinal armazenado no registrador AX. *Dica de instruções: div.*
+Desafio: faça outra rotina que realize a mesma operação, mas com um número com sinal.
+
+2. Faça uma rotina que leia um número de 16 bits sem sinal e retorne o valor lido no registrador AX. *Dica de instruções: mul.*
+Desafio: faça outra rotina que realize a mesma operação, mas com um número com sinal.
+
+3.Faça uma rotina que receba um valor X no registrador AL, um valor n no registrador AH e calcula Xⁿ retornando o valor calculado em AX. *Dica de instruções: mul.*
+
+4. Faça uma rotina que receba um valor em AX e calcule o seu fatorial. Retorne o valor em AX.
+
+5. Faça uma rotina que receba um valor no registrador AX e retorne o fatorial de 32 bits nos registradores DX e AX (os quais formam uma palavra de 32 bits).
+
+6. Faça uma proc chamada `tolower` que receba um caractere em AL e converta para minúsculo se o caractere for maiúsculo. Os caracteres que não são do alfabeto devem ser inalterados.
+
+7. Faça uma proc chamada `toupper` que receba um caractere em AL e converta para maiúsculo se o caractere for minúsculo. Os caracteres que não são do alfabeto devem ser inalterados.
+
+8. Faça uma rotina que receba um valor de dois bytes na pilha e calcule o seu fatorial. Implemente uma versão retornando o valor em AX.
+Desafio: faça outra rotina que realize a mesma operação, mas retornando o resultado pela pilha.
+
+
