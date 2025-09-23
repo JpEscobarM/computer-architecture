@@ -1,0 +1,34 @@
+1)Faça um programa que leia e escreva um vetor de bytes (8 bits) com 5 elementos. 
+
+
+
+2)Faça um programa que leia e escreva um vetor de word (16 bits) com 5 elementos.
+
+ 
+
+3)Faça um programa que leia um vetor de word (16 bits) com 10 elementos e copie para um segundo vetor de mesmo tamanho. A cópia deve ser realizada por meio de uma proc, chamada COPIAVETOR16, que recebe os endereços dos vetores origem e destino pelos registradores SI e DI, respectivamente e o número de elementos em CX. Após a cópia o programa deve mostrar o conteúdo do vetor destino.
+
+4)Faça um programa que calcule a soma dos elementos de um vetor de words (16 bits) com 5 elementos. A soma deve ser realizada por uma rotina chamada SOMA_VETOR16, a qual recebe o endereço inicial do vetor em BX e o número de elementos em CX. A soma dos elementos deve ser retornada em AX. O programa deve mostrar a soma após o cálculo.
+
+
+5)Faça uma rotina que retorne em AX o valor do maior elemento de um vetor de word. A rotina deve receber o endereço inicial do vetor em BX e o número de elementos em CX.
+
+6)Faça uma rotina que retorne em BX o endereço (deslocamento) do maior valor de um vetor de word na posição SI na memória e que possui tamanho CX.
+
+7)Faça um programa que leia um conjunto de 10 elementos de 1 byte e escreva-os em ordem crescente, um valor por linha. Faça uma proc que recebe o endereço inicial do vetor em BX e o número de elementos em CX.
+
+8)Faça um programa que leia caracteres do teclado até ser digitado Enter (0x0D), verifique qual o caractere mais digitado e escreva a seguinte mensagem: “O caractere X ocorreu N vezes” onde X é o caractere digitado e N é o número de ocorrências.
+
+9)Faça uma rotina que receba em DS:SI o endereço de uma matriz quadrada palavras (words) e a sua dimensão em CX e retorne em AX a soma dos elementos da diagonal principal.
+
+10)A memória de vídeo do PC inicia no endereço B800:0000, cada caractere ocupando 2 bytes (o primeiro é o caractere e o segundo é o atributo). Faça uma rotina que receba em AL o número de uma linha, em AH o caractere a ser escrito na tela  e em BL um número de linhas a serem preenchidas. Preencha com o caractere armazenado em AH as BL linhas a partir da linha AL (considere 25 linhas, 80 caracteres por linha, a primeira linha é a linha 1). O acesso deve ser somente via endereçamento indireto.
+
+11)Faça uma rotina que some dois números de 64 bits na memória. O endereço dos números está apontado por DS:SI e ES:DI e o resultado deve sobrepor o número que está em [ES:DI]. Os números estão no formato Intel, isto é, os bytes menos significativos estão nos endereços menos significativos.
+ES:DI   01H 02H 03H 04H 08H 09H 0AH 0BH      
+DS:SI   FFH 08H 09H FDH 0BH 01H 02H 03H 
+----------------------------------------
+ES:DI   00H 0BH 0CH 01H 14H 0AH 0CH 0EH    
+
+12)Faça uma rotina que receba em BX o endereço de um string terminado em $ e retorne em CX o tamanho do string (excluindo o $). Alguns exemplos de string (no .data) terminadas por $ são:
+str1  db  'exemplo numero 1$'
+str2  db  'exemplo numero 2', '$'
