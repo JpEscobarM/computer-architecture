@@ -1,0 +1,445 @@
+                           
+.model small
+
+.stack 100H   ; define uma pilha de 256 bytes (100H)
+
+.data 
+  
+    
+    
+    
+    ;TAMANHO 
+    TAM_VETOR16 EQU 10 
+    
+    proporcaoMatriz EQU 3
+    
+    TAM_MATRIZ EQU proporcaoMatriz*proporcaoMatriz
+    
+    TAM_FRASES EQU 9
+     
+     
+    ;ENDERECOS DE DADOS
+    vetor dw TAM_VETOR16 dup(?) 
+    
+    matriz dw TAM_MATRIZ dup(?)
+     
+    frase db TAM_FRASES dup(?)
+    
+    somaDiagonal dw 0 ; acumulador da soma da diagonal principal  
+       
+       
+    
+    CR EQU 13 ; define uma constante de valor 13
+    LF EQU 10 ; define uma constante de valor 10
+
+
+.code  
+
+NOVA_LINHA proc
+    push AX
+    
+    mov AH,2
+    mov DL,CR
+    int 21H
+    mov DL,LF
+    int 21H
+    
+    pop AX
+    
+    ret
+endp 
+
+; L? um caractere do teclado sem mostr�-lo 
+; Devolve o caractere lido em AL
+LER_CHAR proc 
+    mov AH, 7
+    int 21H   
+    ret       
+endp
+
+
+; Escreve um caractere armazenado em DL na tela     
+ESC_CHAR proc
+    
+    push AX
+    
+    mov AH,2
+    int 21H
+    
+    pop AX
+    
+    ret
+endp  
+
+ESC_UINT16 proc
+    push AX
+    push BX
+    push CX
+    push DX
+    
+    mov BX,10
+    
+    xor CX,CX ; contador de digitos
+    
+LACO_DIV:
+ 
+    xor DX,DX ;DX recebe o resto da divisao
+    div BX
+    
+    push DX
+    inc CX
+        
+    cmp AX,0    ;se ax = 0 nao tem mais numeros pra empilhar
+    jnz LACO_DIV
+
+LACO_ESCDIG:
+    pop DX ;DX tem que receber o digito pois int 21H com AH=2 escreve o caracter em DL
+    add DL,'0' ;obter o valor do digito na tabela ASCII
+    
+    call ESC_CHAR   
+    
+    loop LACO_ESCDIG ;funcao loop decrementa o CX ate 0
+    
+    pop DX
+    pop CX
+    pop BX
+    pop AX
+    
+ ret
+endp      
+           
+; L? um inteiro de 16 bits sem sinal do teclado
+; Devolve o valor lido em AX
+LER_UINT16 proc  
+    ; Salvar registradores utilizados na proc
+    push BX
+    push CX
+    push DX 
+
+    xor AX, AX 
+    xor CX, CX
+    mov BX, 10
+                
+LER_UINT16_SALVA:
+    push AX    ; salvando o acumulador
+     
+LER_UINT16_LEITURA:       
+    call LER_CHAR           ; ler o caractere
+     
+    cmp AL, CR              ; verifica se eh ENTER
+    jz LER_UINT16_FIM         ; jz == je
+      
+    cmp AL, '0'             ; verificar se eh valido
+    jb LER_UINT16_LEITURA 
+  
+    cmp AL, '9'
+    ja LER_UINT16_LEITURA 
+  
+    mov DL, AL      ; escrever o caractere
+    call ESC_CHAR
+  
+    mov CL, AL      ; salvar em CL o caractere
+    sub CL, '0'     ; transforma o caractere em valor ('3' -> 3)
+    
+    pop AX          ; restaurando o acumulador 
+    
+    mul BX          ; deslocamento esquerda do n?mero para a soma
+    add AX,CX
+    
+    jmp LER_UINT16_SALVA
+
+LER_UINT16_FIM: 
+    pop AX          ; restaurando o acumulador 
+         
+         
+    mov DL, CR      ; Dar um enter ap?s a leitura          
+    call ESC_CHAR
+    mov DL, LF             
+    call ESC_CHAR
+
+    ; Restaurar registradores utilizados na proc
+    pop DX
+    pop CX
+    pop BX
+              
+    ret
+endp  
+
+
+ESC_FRASE proc
+    
+     push BX
+    push CX
+    push DX
+    
+   
+    mov BX, offset frase
+    
+    mov [BX],'m'
+    add BX,1
+  
+    mov [BX],'a'
+    add BX,1
+  
+    mov [BX],'t'
+    add BX,1
+    
+    mov [BX],'r'
+    add BX,1
+    
+    mov [BX],'i' 
+    add BX,1
+        
+    mov [BX],'z'
+    add BX,1 
+   
+    mov [BX],':'
+    add BX,1 
+    
+     mov [BX],' '
+    add BX,1 
+   
+     mov [BX],0
+    add BX,1
+   
+    mov BX,offset frase
+    
+MOSTRA_F:
+    mov DL,[BX]
+    cmp DL,0
+    je FIM_F
+    
+    call ESC_CHAR
+    add BX,1
+    jmp MOSTRA_F    
+            
+    
+FIM_F:   
+    pop DX
+    pop CX
+    pop BX
+   
+    
+    
+ ret
+endp
+
+
+ESC_SOMA proc
+    
+   
+    push BX
+    push CX
+    push DX
+    
+   
+    mov BX, offset frase
+    
+    mov [BX],'s'
+    add BX,1
+  
+    mov [BX],'o'
+    add BX,1
+  
+    mov [BX],'m'
+    add BX,1
+    
+    mov [BX],'a'
+    add BX,1
+    
+    mov [BX],':' 
+    add BX,1
+        
+    mov [BX],' '
+    add BX,1 
+   
+    mov [BX],0
+    
+    mov BX,offset frase
+    
+MOSTRA_SOMA:
+    mov DL,[BX]
+    cmp DL,0
+    je FIM_SOMA
+    
+    call ESC_CHAR
+    add BX,1
+    jmp MOSTRA_SOMA    
+            
+    
+FIM_SOMA:   
+    pop DX
+    pop CX
+    pop BX
+   
+    
+    
+ ret
+endp
+
+COPIAVETOR16 proc
+   
+   push AX
+   push BX
+   push CX
+   push DX
+   push SI
+   push DI
+           
+   mov CX,TAM_VETOR16       
+           
+LACO_COPIA:
+   mov AX, [SI]
+    
+   mov [DI],AX 
+   add SI,2
+   add DI,2
+    
+   loop LACO_COPIA 
+    
+  pop DI
+  pop SI
+  pop DX
+  pop CX
+  pop BX
+  pop AX 
+    
+ ret
+endp
+
+SOMA_VETOR16 proc
+   
+   push BX
+   push CX
+  
+
+  
+  mov BX,offset vetor  
+  
+  mov CX, TAM_VETOR16
+    
+  xor AX,AX  
+    
+PERCORRE_VETOR:
+
+    add AX,[BX]
+    add BX,2    
+    
+    loop PERCORRE_VETOR  
+    
+    
+    
+
+  
+  pop CX
+  pop BX
+   
+
+    ret
+endp 
+
+;rotina que recebe em DS:SI o 
+;endere�o de uma matriz quadrada palavras (words) 
+;e a sua dimens�o em CX e retorne em AX a soma dos 
+;elementos da diagonal principal.  
+;offset = i * (n + 1) * 2( *2 pois sao 2 bytes por word)
+SOMA_DIAGONAL_PRINCIPAL proc
+    push BX
+    push DX
+    push SI
+    push CX
+
+    mov SI,offset matriz
+    
+    xor AX, AX       ; zera AX
+    xor BX, BX       ; BX ser� o �ndice i (linha)
+    mov CX, proporcaoMatriz
+    
+    mov somaDiagonal, 0 ; zera a vari�vel de soma
+
+LOOP_DIAGONAL:
+    mov DX, CX        ; DX = dimens�o n
+    inc DX            ; DX = n + 1 (para acessar elemento da diagonal)
+
+    mov AX, BX        ; AX = i (linha)
+    mul DX            ; AX = i * (n + 1)
+    shl AX, 1         ; AX = offset em bytes (word = 2 bytes)
+
+    mov DI, SI        ; DI = base da matriz
+    add DI, AX        ; DI = endere�o do elemento matriz[i][i]
+
+    mov DX, [DI]      ; DX = matriz[i][i]
+    add somaDiagonal, DX ; soma acumulada
+
+    inc BX            ; i++
+
+    cmp BX, CX
+    jl LOOP_DIAGONAL
+
+
+    ; Retornar a soma em AX
+    mov AX, somaDiagonal
+    
+    
+    ; Restaurar registradores
+    pop CX
+    pop SI
+    pop DX
+    pop BX
+    ret
+endp
+
+INICIO:  
+    mov AX, @DATA
+    mov DS, AX 
+   
+    ; Vers?o que destroi o endere?amento indireto
+    mov BX, offset matriz   ; NUNCA utilizem LEA lea BX, VETOR
+    mov CX, TAM_MATRIZ 
+                   
+    LACO_PRINCIPAL:                         
+       call LER_UINT16
+       mov [BX], AX   
+       add BX, 2
+       loop LACO_PRINCIPAL ; dec CX
+ 
+    ; Para escrever, pode-se utilizar o 
+    ; registrador SI, mas o DI tamb?m 
+    ; poderia ter sido utilizado
+    mov CX, TAM_MATRIZ
+    mov BX, offset matriz  
+    
+    
+    call ESC_FRASE
+    
+    mov DL,'['
+    call ESC_CHAR
+                   
+                   
+    ESCREVE_VETOR: 
+    
+        mov AX, [BX]
+        call ESC_UINT16 
+        add BX, 2   
+        
+         mov DL,20H
+        call ESC_CHAR
+        
+        loop ESCREVE_VETOR 
+     
+    mov DL,']'
+    call ESC_CHAR
+    
+    call NOVA_LINHA
+    
+    call ESC_SOMA
+    call SOMA_DIAGONAL_PRINCIPAL
+    call ESC_UINT16
+   
+    
+    
+    
+    ; Finaliza??o do programa
+    mov ah, 4ch   
+    int 21h
+ end INICIO   
