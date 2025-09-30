@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1759234076 source:c:\users\jmartins\repos\arquitetura-de-computadores\8086\tde-1\project\main.c
+	<stdio.h>
+	<stdlib.h>
+	<time.h>
+
