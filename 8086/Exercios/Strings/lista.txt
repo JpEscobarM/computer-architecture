@@ -1,0 +1,42 @@
+1- Faça um programa que leia e escreva um vetor de word (16 bits) com 5 elementos utilizando instruções de manipulação de strings.
+
+
+2- Faça um programa que leia um vetor de word (16 bits) com 10 elementos e copie para um segundo vetor de mesmo tamanho. A cópia deve ser realizada por meio de uma proc, chamada COPIAVETOR16, que recebe os endereços dos vetores origem e destino pelos registradores SI e DI, respectivamente e o número de elementos em CX. A cópia deve ser implementada utilizando somente instruções de manipulação de strings. Após a cópia o programa deve mostrar o conteúdo do vetor destino. 
+
+
+3- Faça uma rotina que receba em DI o endereço de um string terminado em $ e retorne em CX o tamanho do string (excluindo o $). Alguns exemplos de string (no .data) terminadas por $ são:
+str1  db  'exemplo numero 1$'
+str2  db  'exemplo numero 2', '$'
+
+
+4- Faça um programa que leia uma string do 
+teclado (até ser digitado ENTER) e verifique se a string é palíndromo
+ (igual de trás para frente . Ex: ARARA).
+
+5- Faça uma rotina que receba um string com um valor de 4 dígitos em decimal na
+ posição apontada por DS:SI e retorne o valor no registrador AX.
+
+6- Faça uma proc que receba um valor no registrador AX e converta cada nibble (4 bits) em
+ um caractere hexadecimal ('0' a 'F') armazenando-o a par5- tir de um endereço apontado por ES:DI.
+ A rotina deve preservar os registradores. Por exemplo, no caso do registrador AX possuir o valor decimal 14923 (3A4B em hexadecimal),
+ a rotina deve gravar o caractere '3' na posição ES:DI, 'A' na posição ES:[DI+1], '4' na posição ES:[DI+2] e 'B' na posição ES:[DI+3].
+
+7- Faça uma rotina que receba em ES:DI o endereço de um vetor de bytes e o respectivo tamanho em CX e um valor em AL.
+ A rotina deve retornar quantas ocorrências do valor em AL ocorre no vetor.
+
+8- Utilizando a string abaixo
+
+Mes db 'JanFevMarAbrMaiJunJulAgoSetOutNovDez'
+dia db 16 dup (0)
+
+Faça uma rotina que receba uma data (AL = dia , AH = mês , BL = ano com dois dígitos) e retorne na área ‘dia’ uma string no seguinte formato: ’23 de Set de 15’.
+ Lembre-se que a posição onde fica cada valor variável (dia mês e ano) é fixa na área de memória dia.
+
+9- Faça uma rotina que receba em DS:SI o endereço de um string terminado em $ e converta as
+ letras maiúsculas em minúsculas.
+
+10- Faça uma rotina que receba em DS:SI e ES:DI o endereço de dois strings terminados em $ e retorne em AL:
+0 – se os strings são iguais
+-1 – se o string apontado por DS:SI é menor
+1 – se o string apontado por DS:SI é maior
+
