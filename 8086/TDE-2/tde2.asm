@@ -6,6 +6,13 @@
 
 .data
       op_menu db 0
+      seed dw 0 
+      
+    menu_selecao db 0   ; 0 = Jogar, 1 = Sair
+    inicia_jogo  db 0   ; Flag para iniciar o jogo
+    fps dw 10000        ; tempo em microsegundos (/10 para frames por segundo)
+
+      
       
 arte_titulo db 3 dup(" ")," ___                    _    _     ", 10, 13 ; , 10, 13 ; Isso quebra a linha
             db 3 dup(" "),"/ __| __ _ _ __ _ _ __ | |__| |___ ", 10, 13            ; Verificar para usar na versao final
@@ -14,29 +21,25 @@ arte_titulo db 3 dup(" ")," ___                    _    _     ", 10, 13 ; , 10, 
        
 tamanho_arte equ $ - arte_titulo
 
-arte_fase_1 db "   __                _ ", 10, 13
-            db "  / _|__ _ ___ ___  / |", 10, 13
-            db " |  _/ _` (_-</ -_) | |", 10, 13
-            db " |_| \__,_/__/\___| |_|", 10, 13
+arte_fase_1 db "  ___               _ ", 10, 13
+            db " | __|_ _ ___ ___  / |", 10, 13
+            db " | _/ _` (_-</ -_) | |", 10, 13
+            db " |_|\__,_/__/\___| |_|", 10, 13
+            
+tamanho_fase1 equ $ - arte_fase_1
 
+arte_fase_2 db " ___               ___ ", 10, 13
+            db "| __|_ _ ___ ___  |_  )", 10, 13
+            db "| _/ _` (_-</ -_)  / / ", 10, 13
+            db "|_|\__,_/__/\___| /___|", 10, 13
+            
+tamanho_fase2 equ $ - arte_fase_2
 
-arte_fase_2 db "       _____  _____  _____  _____       "
-            db "      /   __\/  _  \/  ___>/   __\      "
-            db "      |   __||  _  ||___  ||   __|      "
-            db "      \__/   \__|__/<_____/\_____/      "
-            db "                 _____                  "
-            db "                <___  \                 "
-            db "                 /  __/                 "
-            db "                <_____|                 "
-
-arte_fase_3 db "       _____  _____  _____  _____       "
-            db "      /   __\/  _  \/  ___>/   __\      "
-            db "      |   __||  _  ||___  ||   __|      "
-            db "      \__/   \__|__/<_____/\_____/      "
-            db "                 _____                  "
-            db "                /  _  \                 "
-            db "                >-<_  <                 "
-            db "                \_____/                 "
+arte_fase_3 db "  ___               ____ ", 10, 13
+            db " | __|_ _ ___ ___  |__ / ", 10, 13
+            db " | _/ _` (_-</ -_)  |_ \ ", 10, 13
+            db " |_|\__,_/__/\___| |___/ ", 10, 13
+tamanho_fase2 equ $ - arte_fase_3
             
 ;  _____  _____  __  __  _____    _____  __ __  _____  _____ 
 ; /   __\/  _  \/  \/  \/   __\  /  _  \/  |  \/   __\/  _  \
@@ -65,14 +68,35 @@ btn_sair  db 15 dup(" "),218,196,196,196,196,196,196,196,191,10,13
 tamanho_sair equ $-btn_sair
 
 
-menu_selecao db 0   ; 0 = Jogar, 1 = Sair
-inicia_jogo  db 0   ; Flag para iniciar o jogo
-fps dw 10000        ; tempo em microsegundos (/10 para frames por segundo)
+;FORMULA BASICA DE POSICIONAMENTO NA TELA: LINHA * 320 + COLUNA.
+
+; dimensao da nave aliada e das naves alienigenas
+;de 13 pixels de altura por 29 pixels de largura
+
+nave db 9,9,9,9,9,9,
+     db 0,9,9,9,9,9,9,9,0,0,0,0,0,0,0,C,C,C,0,8,E,E,8,
+     db 0,0,8,9,9,9,9,9,9,0,0,0,C,C,C,C,C,C,0,8,E,E,E,E,E,8,
+     db 0,0,0,9,9,9,9,9,C,C,C,C,C,C,C,C,C,C,0,8,E,0,0,0,E,E,
+     db 0,0,0,0,C,C,C,C,C,C,C,C,C,C,C,C,C,C,0,8,E,0,0,0,E,E,E,
+     db 0,0,0,C,C,C,C,C,C,C,C,C,C,C,C,C,C,C,C,6,8,0,8,E,E,8,E,E,
+     db E,E,E,E,E,E,E,E,E,C,C,C,C,C,C,C,C,C,C,C,6,0,0,0,0,0,0,0,
+     db 0,0,0,C,C,C,C,C,C,C,C,C,C,C,C,C,C,C,C,C,C,C,C,C,C,C,C,C,
+     db 0,0,0,0,C,C,C,C,C,C,C,C,C,C,C,C,C,C,C,C,C,C,C,C,C,C,C,
+     db 0,0,0,9,9,9,9,9,C,C,C,C,C,C,C,C,C,C,C,C,C,C,C,C,C,C,
+     db 0,8,9,9,9,9,9,9,8,0,0,0,6,6,6,C,C,C,6,6,6,6,6,6,
+     db 0,9,9,9,9,9,9,9,0,0,0,0,0,0,0,6,6,6,
+     db 9,9,9,9,9,9
+     
+nave_pos dw 0
 
 
-.code 
+        
+.code  
 
-ESCREVE_STRING proc ; Funcao que escreve strings na tela
+
+; Funcao generica que escreve Strings com cor na tela
+
+ESCREVE_STRING proc 
     push AX
     push BX
     push DS
@@ -331,7 +355,50 @@ SAIR_BTN:
     
    ret
 endp    
+ 
+;INT 1AH - CLOCK 00H - GET TIME OF DAY
+;Obtem os valores do controlador do relogio
+;do sistema.
+SEED_FROM_TICKS proc
+    push AX
+    push CX
+    push DX
+    mov  AH, 00h
+    int  1Ah              ; CX:DX = ticks desde 00:00
+    mov  seed, DX         
+    pop  DX
+    pop  CX
+    pop  AX
     
+    ret
+endp
+
+;proc que reposiciona naves e objetos no menu inicial
+;Nave aliada: move-se da esquerda para a direita,
+;desaparecendo ao atingir o limite direito da tela e reaparecendo 
+;novamente � esquerda.
+
+;Meteoro: realiza o movimento inverso, deslocando-se
+;da direita para a esquerda, desaparecendo no limite esquerdo
+; e reaparecendo no lado direito. 
+
+
+RESET_POSICOES_MENU proc
+    
+    ;FORMULA BASICA DE POSICIONAMENTO NA TELA: LINHA * 320 + COLUNA.
+    push AX
+    mov AX, 70*320
+    mov nave_posicao, AX
+    add AX, 40  ;40 pixel pra baixo da nave
+    add AX, 320 ;vai ate o fim da linha onde vem o meteoro 
+    
+  ret
+endp
+
+
+       
+proc        
+       
 MAIN:
     ;referencia o segmento de dados em ds
     mov AX, @data
@@ -342,10 +409,14 @@ MAIN:
     mov AX, 0A000H
     mov ES, AX
     
+    
+    ;call SEED_FROM_TICKS
+    
     ;inicia modo de video com 0A000H
     xor AH, AH
     mov AL, 13H
     int 10H
+    
     
     
     call ESCREVE_TITULO
