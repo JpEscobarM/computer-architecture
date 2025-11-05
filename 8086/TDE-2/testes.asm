@@ -5,7 +5,7 @@
 
 
 .data
-      op_menu db 0
+      op_menu db 1
      
       seed dw 0 
       
@@ -42,7 +42,7 @@ arte_fase_3 db "  ___               ____ ", 10, 13
             db " | __|_ _ ___ ___  |__ / ", 10, 13
             db " | _/ _` (_-</ -_)  |_ \ ", 10, 13
             db " |_|\__,_/__/\___| |___/ ", 10, 13
-tamanho_fase2 equ $ - arte_fase_3
+tamanho_fase3 equ $ - arte_fase_3
             
 ;  _____  _____  __  __  _____    _____  __ __  _____  _____ 
 ; /   __\/  _  \/  \/  \/   __\  /  _  \/  |  \/   __\/  _  \
@@ -72,41 +72,39 @@ tamanho_sair equ $-btn_sair
 
 
 ;FORMULA BASICA DE POSICIONAMENTO NA TELA: LINHA * 320 + COLUNA.
-
-; dimensao da nave aliada e das naves alienigenas
-;de 13 pixels de altura por 29 pixels de largura
-; ========= NAVE 13x29 (valores em 00H..0FH) =========
-nave db 09H,09H,09H,09H,09H,09H
-     db 00H,09H,09H,09H,09H,09H,09H,09H,00H,00H,00H,00H,00H,00H,00H,0CH,0CH,0CH,00H,08H,0EH,0EH,08H
-     db 00H,00H,08H,09H,09H,09H,09H,09H,09H,00H,00H,00H,0CH,0CH,0CH,0CH,0CH,0CH,00H,08H,0EH,0EH,0EH,0EH,0EH,08H
-     db 00H,00H,00H,09H,09H,09H,09H,09H,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,00H,08H,0EH,00H,00H,00H,0EH,0EH
-     db 00H,00H,00H,00H,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,00H,08H,0EH,00H,00H,00H,0EH,0EH,0EH
-     db 00H,00H,00H,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,06H,08H,00H,08H,0EH,0EH,08H,0EH,0EH
-     db 0EH,0EH,0EH,0EH,0EH,0EH,0EH,0EH,0EH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,06H,00H,00H,00H,00H,00H,00H,00H
-     db 00H,00H,00H,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH
-     db 00H,00H,00H,00H,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH
-     db 00H,00H,00H,09H,09H,09H,09H,09H,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH
-     db 00H,08H,09H,09H,09H,09H,09H,09H,08H,00H,00H,00H,06H,06H,06H,0CH,0CH,0CH,06H,06H,06H,06H,06H,06H
-     db 00H,09H,09H,09H,09H,09H,09H,09H,00H,00H,00H,00H,00H,00H,00H,06H,06H,06H
-     db 09H,09H,09H,09H,09H,09H
+; 13 linhas ? 29 colunas
+nave db 09H,09H,09H,09H,09H,09H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H
+     db 00H,09H,09H,09H,09H,09H,09H,09H,00H,00H,00H,00H,00H,00H,00H,0CH,0CH,0CH,0CH,00H,0EH,0EH,0EH,00H,00H,00H,00H,00H,00H
+     db 00H,00H,08H,09H,09H,09H,09H,09H,09H,00H,00H,00H,0CH,0CH,0CH,0CH,0CH,0CH,0CH,00H,0EH,0EH,0EH,0EH,0EH,0EH,00H,00H,00H
+     db 00H,00H,00H,09H,09H,09H,09H,09H,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,00H,0EH,0EH,00H,08H,0EH,0EH,08H,00H,00H
+     db 00H,00H,00H,00H,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,00H,0EH,0EH,00H,08H,0EH,0EH,0EH,06H,00H
+     db 00H,00H,00H,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,08H,0EH,00H,0EH,0EH,0EH,08H,0EH,0EH
+     db 0EH,0EH,0EH,0EH,0EH,0EH,0EH,0EH,0EH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,06H,00H,00H,00H,00H,00H,00H,00H,00H
+     db 00H,00H,00H,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH
+     db 00H,00H,00H,00H,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,06H,00H
+     db 00H,00H,00H,09H,09H,09H,09H,09H,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,08H,00H,00H
+     db 00H,08H,09H,09H,09H,09H,09H,09H,01H,00H,00H,00H,06H,06H,06H,0CH,0CH,0CH,0CH,06H,06H,06H,06H,06H,08H,00H,00H,00H,00H
+     db 00H,09H,09H,09H,09H,09H,09H,09H,00H,00H,00H,00H,00H,00H,00H,06H,06H,06H,06H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H
+     db 09H,09H,09H,09H,09H,09H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H
 
 nave_tamanho equ $-nave
 
+
 ; ========= METEORO 13x29 (valores em 00H..0FH) =========
-meteoro  db                                             05H,05H,05H,00H,00H,00H,08H
-         db                                     ,05H,0DH,0DH,0DH,00H,05H,05H,0DH,00H,00H,05H,05H
-         db                         ,05H,05H,05H,0CH,0DH,0CH,05H,05H,05H,05H,0CH,0CH,06H,
-         db             08H,05H,05H,05H,05H,05H,0CH,0CH,0CH,05H,05H,05H,05H,05H,0CH,0CH,0CH,0CH,00H,00H,00H,00H,0DH,0DH,0CH
-         db             08H,05H,05H,0CH,05H,05H,0CH,0CH,0CH,05H,05H,05H,05H,0CH,0CH,05H,05H,05H,
-         db         05H,0CH,0CH,0CH,05H,0CH,0CH,0CH,0CH,05H,05H,05H,0CH,0CH,05H,05H,05H,0CH,05H,05H,05H,05H,00H,00H,05H,05H
-         db     05H,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,05H,0CH,0CH,0CH,0CH,0CH,0CH,05H,0CH,0CH,05H,    
-         db     05H,0CH,0CH,0CH,0CH,05H,05H,05H,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,05H,0CH,0CH,05H,
-         db         05H,05H,05H,0DH,0CH,05H,05H,0CH,0CH,0CH,0CH,0CH,0CH,0CH,05H,05H,05H,0CH,0CH,0CH,0CH,0CH,00H,00H,0CH,0CH
-         db         08H,05H,05H,0DH,0DH,00H,0CH,05H,0CH,0CH,0CH,0CH,0CH,0CH,05H,05H,05H,05H,0CH
-         db                     05H,0DH,0DH,0DH,0CH,0CH,05H,0CH,0CH,0CH,0CH,05H,05H,05H,05H,00H,00H,0CH,0CH,0CH
-         db                         08H,08H,08H,05H,05H,05H,05H,05H,0CH,0CH,08H
-         db                                     05H,05H,05H,05H,05H,05H,08H
-     
+; 13 linhas ? 29 colunas
+meteoro db 00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,05H,05H,05H,05H,05H,08H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H
+        db 00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,05H,0DH,0DH,0DH,05H,05H,08H,00H,00H,05H,05H,00H,00H,00H,00H,00H,00H,00H,00H
+        db 00H,00H,00H,00H,00H,00H,00H,00H,05H,05H,0CH,0DH,05H,05H,05H,0CH,0CH,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H
+        db 00H,00H,00H,00H,00H,00H,05H,05H,05H,05H,0CH,0CH,05H,05H,05H,05H,0CH,0CH,0CH,00H,00H,00H,0DH,0DH,0CH,00H,00H,00H,00H
+        db 00H,00H,00H,00H,00H,00H,05H,05H,0CH,05H,0CH,0CH,05H,05H,05H,0CH,0CH,05H,05H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H
+        db 00H,00H,00H,00H,00H,05H,0CH,0CH,05H,0CH,0CH,0CH,05H,05H,0CH,05H,05H,0CH,05H,05H,05H,00H,00H,05H,05H,00H,00H,00H,00H
+        db 00H,00H,00H,00H,05H,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,05H,00H,00H,00H,00H,00H,00H,00H,00H,00H
+        db 00H,00H,00H,00H,05H,0CH,0CH,0CH,05H,05H,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,05H,00H,00H,00H,00H,00H,00H,00H,00H,00H
+        db 00H,00H,00H,00H,00H,05H,05H,0DH,0CH,05H,0CH,0CH,0CH,0CH,0CH,05H,05H,0CH,0CH,0CH,0CH,00H,00H,0CH,0CH,00H,00H,00H,00H
+        db 00H,00H,00H,00H,00H,08H,05H,0DH,0DH,0CH,05H,0CH,0CH,0CH,0CH,05H,05H,05H,0CH,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H
+        db 00H,00H,00H,00H,00H,00H,00H,05H,0DH,0DH,0CH,0CH,0CH,0CH,0CH,05H,05H,05H,00H,00H,0CH,0CH,00H,00H,00H,00H,00H,00H,00H
+        db 00H,00H,00H,00H,00H,00H,00H,00H,08H,08H,05H,05H,05H,05H,0CH,08H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H
+        db 00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,05H,05H,05H,05H,05H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H
 
 meteoro_tamanho equ $-meteoro
 
@@ -373,6 +371,8 @@ SAIR_BTN:
    xor DL, DL ;colunha =0;
    mov DH, 21 ;linha
    
+   call ESCREVE_STRING
+   
    
    pop AX      
     
@@ -406,7 +406,7 @@ endp
 ;proc que reposiciona naves e objetos no menu inicial
 ;Nave aliada: move-se da esquerda para a direita,
 ;desaparecendo ao atingir o limite direito da tela e reaparecendo 
-;novamente � esquerda.
+;novamente ???????????? esquerda.
 
 ;Meteoro: realiza o movimento inverso, deslocando-se
 ;da direita para a esquerda, desaparecendo no limite esquerdo
@@ -423,12 +423,12 @@ RESET_POSICOES_MENU proc
     
     mov nave_posicao, AX 
      
+    add AX, 319 ;vai ate o fim da linha onde vem o meteoro 
  
      
     add AX, 40*320  ;40 pixel pra baixo da nave, tem que multiplicar por 32 
     
-    add AX, 319 ;vai ate o fim da linha onde vem o meteoro 
-    
+   
     mov meteoro_posicao, AX   
        
        
@@ -489,7 +489,7 @@ DESENHA proc
      push DS
      push AX ;salva a posicao
       
-     mov AX,@DATA
+     mov AX, @data
      mov DS, AX
      
      mov AX, 0A000H;SEGMENTO DE VIDEO
@@ -537,16 +537,14 @@ NAVE_METEORO_MENU proc
     mov SI, offset nave ;prepara SI para MOVSB Move de DS:SI -> ES:DI
     call DESENHA; RENDER_SPRITE
     
-    
+    xor CX,CX
     
     
   ret
 endp 
 
 
-       
-proc        
-       
+
 MAIN:
     ;referencia o segmento de dados em ds
     mov AX, @data
@@ -568,9 +566,10 @@ MAIN:
     
     
     call ESCREVE_TITULO
-    call ESCREVE_BOTOES
-    call RESET_POSICOES_MENU ;posiciona na ve e meteoro nas extremidades
+    call ESCREVE_BOTOES  
     
+    call RESET_POSICOES_MENU ;posiciona na ve e meteoro nas extremidades
+    call NAVE_METEORO_MENU
     
     call JOGO
    
