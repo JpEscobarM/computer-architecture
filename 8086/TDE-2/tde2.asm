@@ -112,20 +112,20 @@ meteoro db 00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,05H,05H,05H,05H,05H,08H,0
 meteoro_tamanho equ $-meteoro
 
 
-;====ALIEN 13x29====
-alien  db 00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h
-    db 00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h
-    db 00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h
-    db 00h,00h,00h,00h,00h,00h,00h,00h,02h,02h,02h,02h,02h,0Ah,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h
-    db 00h,00h,00h,00h,00h,00h,02h,02h,02h,0Ah,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,00h,00h,00h,00h,00h,00h,00h,00h
-    db 00h,00h,00h,00h,00h,00h,02h,05h,05h,0Dh,0Eh,01h,05h,00h,01h,0Eh,05h,05h,00h,0Eh,0Eh,00h,00h,00h,00h,00h,00h,00h,00h
-    db 00h,00h,00h,0Dh,02h,02h,02h,08h,08h,07h,0Bh,08h,08h,07h,01h,0Eh,03h,03h,03h,0Eh,0Eh,0Eh,09h,09h,00h,00h,00h,00h,00h
-    db 00h,00h,00h,00h,00h,00h,00h,0Ah,00h,0Dh,00h,0Bh,00h,0Ah,02h,0Eh,0Eh,0Eh,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h
-    db 00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,02h,02h,0Ah,0Eh,0Eh,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h
-    db 00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h
-    db 00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h
-    db 00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h
-    db 00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h
+alien  db 00h,00h,00h,00h,00h,00h,00h,02h,02h,02h,02h,02h,02h,02h,0Ah,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,00h,00h,00h,00h,00h,00h,00h,00H
+       db 00h,00h,00h,00h,00h,00h,02h,02h,02h,0Ah,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,00h,00h,00h,00h,00h,00H
+       db 00h,00h,00h,00h,02h,02h,02h,02h,02h,0Ah,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,00h,00h,00h,00H
+       db 00h,00h,00h,00h,02h,02h,05h,05h,05h,0Dh,0Eh,0Eh,05h,05h,05h,0Dh,0Eh,0Eh,05h,05h,05h,0Dh,0Eh,0Eh,0Eh,00h,00h,00h,00H
+       db 00h,00h,02h,02h,02h,02h,05h,05h,05h,0Dh,0Eh,0Eh,05h,05h,05h,0Dh,0Eh,0Eh,05h,05h,05h,0Dh,0Eh,0Eh,0Eh,0Eh,0Eh,00h,00H
+       db 00h,00h,02h,02h,02h,02h,05h,05h,05h,0Dh,0Eh,0Eh,05h,05h,05h,0Dh,0Eh,0Eh,05h,05h,05h,0Dh,0Eh,0Eh,0Eh,0Eh,0Eh,00h,00H
+       db 02H,02H,02H,02H,02H,02H,02H,02H,02H,02H,02H,02H,02H,0Ah,0Ah,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh
+       db 02H,02H,02H,02H,02H,02H,02H,02H,02H,02H,02H,02H,02H,0Ah,0Ah,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0EH
+       db 00h,00h,00h,00h,05h,05h,05h,0Dh,02h,02h,0Ah,0Eh,0Eh,0Eh,05h,05h,05h,0Dh,0Eh,0Eh,0Eh,0Eh,00h,00h,00h,00h,00h,00h,00H
+       db 00h,00h,00h,00h,05h,05h,05h,0Dh,02h,02h,0Ah,0Eh,0Eh,0Eh,05h,05h,05h,0Dh,0Eh,0Eh,0Eh,0Eh,00h,00h,00h,00h,00h,00h,00H
+       db 00h,00h,00h,00h,05h,05h,05h,0Dh,02h,02h,0Ah,0Eh,0Eh,0Eh,05h,05h,05h,0Dh,0Eh,0Eh,0Eh,0Eh,00h,00h,00h,00h,00h,00h,00H
+       db 00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,02h,02h,02h,0Ah,0Ah,0Eh,0Eh,0Eh,0Eh,00h,00h,00h,00h,00h,00h,00h,00h,00h,00H
+       db 00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,02h,02h,02h,0Ah,0Ah,0Eh,0Eh,0Eh,0Eh,00h,00h,00h,00h,00h,00h,00h,00h,00h,00H ;come?ar de baixo a 
+alien_tamanho equ $ - alien
 
 
 alien_tamanho equ $ - alien
@@ -136,7 +136,7 @@ meteoro_posicao dw 0
 alien_posicao dw 0
 alien_y dw 0
 alien_x dw 0
-alien_direction dw 0
+alien_direction dw 1 ;inicia indo para esquerda
         
 .code
 ; Funcao generica que escreve Strings com cor na tela
@@ -320,10 +320,10 @@ endp
 JOGO proc                       ; Carrega a tela inicial do jogo (menu)
     call ESCREVE_TITULO
     call ESCREVE_BOTOES  
-    
+    call RESET_ALIEN_MENU  ;posiona nave alien em uma posicao aleatoria na tela   
     call RESET_POSICOES_MENU    ;posiciona nave e meteoro nas extremidades
- 
-    MENU:
+     
+    MENU_JOGO:
         call BUSCA_INTERACAO
         call INTERAGE_MENU
         call MENU_ANIMATION
@@ -331,7 +331,7 @@ JOGO proc                       ; Carrega a tela inicial do jogo (menu)
     
     CONTINUA_LOOP:
         call VERIFICA_OPCAO
-        jmp MENU
+        jmp MENU_JOGO
 
     ret
 endp
@@ -471,6 +471,7 @@ RESET_POSICOES_MENU proc
   ret
 endp
 
+;proc que redefine a posicao do alien no menu inicial
 RESET_ALIEN_MENU proc
     
     push AX
@@ -478,12 +479,12 @@ RESET_ALIEN_MENU proc
     push BX
     
     xor AX,AX
-    mov AH, 150 ;AH = MAX
+    mov AH, 133 ;AH = MAX
     
     call RAND_8 ; retorna um valor peseudoaleatorio em AL onde AL < AH
-    cmp AL,85 ; se AL < 83 -> sendo 83 = 70 do inicio do meteoro + 13 altura do meteoro
+    cmp AL,90 ; se AL < 83 -> sendo 83 = 70 do inicio do meteoro + 13 altura do meteoro
     jae Y_OK 
-    mov AL,85;come?a depois do meteoro
+    mov AL,90;come??a depois do meteoro
      
 Y_OK:
     xor DX,DX
@@ -493,23 +494,26 @@ Y_OK:
     mov AH,255 ; max largura
     call RAND_8
     
-    cmp AL,29 ;coluna minima 29
+    cmp AL,50 ;coluna minima 29
     jae X_OK
-    mov AL,29
+    mov AL,50
 X_OK:
     xor DX,DX
     mov DL,AL
     mov alien_x,DX ;coluna minima para X
     
     
-    xor AX,AX
-    mov AX,alien_y
-    xor BX,BX
-    mov BX,320 ;multiplicador de linha
-    mul BX
+    mov BX,320 ;adiciona 320 que o maximo de deslocamento por linha
     
-    mov alien_posicao,AX
-    mov alien_direction,-1
+    mov AX,alien_y ; move o valor em alien_y para AX
+    mul BX ;multiplica alien_y em AX para obter a linha correta, ja que a formula de deslocamento ? Y*320 + X
+       
+    add AX,alien_x
+  
+    mov alien_posicao, AX
+    
+    mov alien_direction,1
+
     
 
     pop BX
@@ -520,7 +524,7 @@ X_OK:
 endp 
 
 
-;proc que "limpa" 13x29 pixeis na posicao DI
+;proc que limpa 13x29 pixeis na posicao DI
 ;DI = POSICAO
 LIMPA_13x29 proc;            
     push AX
@@ -610,7 +614,7 @@ MENU_ANIMATION proc
         mov SI, offset nave ;prepara SI para MOVSB Move de DS:SI -> ES:DI
         call DESENHA; RENDER_SPRITE
     
-        ;cmp alien_x,29 se chegou no canto esquerdo muda a direcao
+      
     
     MOVE_METEORO:
         mov AX, meteoro_posicao
@@ -620,7 +624,7 @@ MENU_ANIMATION proc
         cmp AX, 70*320 ;linha 70 = 50 da nave + 20 do reset posicoes
         pop AX
         
-        je RESET_POS
+        je RESET_NAVE_METEORO
         
         call LIMPA_13x29; apaga 13x29 na posicao DI.
             
@@ -631,13 +635,70 @@ MENU_ANIMATION proc
         mov SI, offset meteoro
         call DESENHA; RENDER_SPRIT
         
+        
+     ;refazer    
+     MOVE_ALIEN:
+    
+     mov DX,alien_direction
+     cmp DX,1   
+     jne ALIEN_DIREITA
+     
+        mov AX, alien_posicao
+        mov DI, AX;move a posicao do meteoro para DI
+        
+        mov DX,alien_x 
+         
+        push AX
+        cmp DX,0 ;Chegou na borda da esquerda     
+        pop AX
+        
+        je RESET_ALIEN_DIRECTION
+        
+        call LIMPA_13x29; apaga 13x29 na posicao DI.
+            
+        ;alien vem pra esquerda    
+        dec alien_posicao
+        dec AX
+        dec alien_x
+        
+        mov SI, offset alien
+        call DESENHA; RENDER_SPRIT
+        
         jmp END_POS_UPDATE
-
-
-    RESET_POS:
+        
+ ALIEN_DIREITA:
+        mov AX, alien_posicao
+        mov DI, AX;move a posicao do aliwn para DI
+        mov DX,alien_x  
+        push AX
+        cmp DX,291 ;Chegou na borda da esquerda     
+        pop AX     
+        je RESET_ALIEN
+        
+        call LIMPA_13x29; apaga 13x29 na posicao DI.
+            
+        ;alien vem pra direita    
+        inc alien_posicao
+        inc AX
+        inc alien_x
+        
+        mov SI, offset alien
+        call DESENHA; RENDER_SPRIT 
+         jmp END_POS_UPDATE
+    
+  RESET_ALIEN_DIRECTION:
+        mov alien_direction,2
+        jmp END_POS_UPDATE
+        
+  RESET_ALIEN:
+        call LIMPA_13x29
+        call RESET_ALIEN_MENU
+        jmp END_POS_UPDATE
+        
+  RESET_NAVE_METEORO:
         call LIMPA_13x29; apaga 13x29 na posicao DI.
         call RESET_POSICOES_MENU 
-
+    
     END_POS_UPDATE:
       ret
 endp
@@ -651,13 +712,13 @@ MAIN:
     mov AX, 0A000H
     mov ES, AX
     
-    call SEED_FROM_TICKS
-    
     ;inicia modo de video com 0A000H
     xor AH, AH
     mov AL, 13H
     int 10H
     
-    call JOGO
+    call SEED_FROM_TICKS ;gera um valor para seed dos numeros aleatorios
+    
+    call JOGO   
     
 end MAIN
