@@ -5,17 +5,20 @@
 
 
 .data
-      op_menu db 1
-     
-      seed dw 0 
-      
-      fase db 1 ;indicia fase atual 
-      
-    menu_selecao db 0   ; 0 = Jogar, 1 = Sair
-    inicia_jogo  db 0   ; Flag para iniciar o jogo
-    fps dw 10000        ; tempo em microsegundos (/10 para frames por segundo)
+menu db 1
 
+seed dw 0 
       
+fase db 1 ;indicia fase atual 
+      
+menu_selecao db 0   ; 0 = Jogar, 1 = Sair
+inicia_jogo  db 0   ; Flag para iniciar o jogo
+fps dw 10000        ; tempo em microsegundos (/10 para frames por segundo)
+
+SCR_W equ 320 ;COLUNAS
+SCR_H equ 200 ;QTD LINHAS
+SPR_W equ 29  ;LARGURA NAVE/METEORO/ALIEN
+SPR_H equ 13  ;ALTURA NAVE/METEORO/ALIEN
       
 arte_titulo db 3 dup(" ")," ___                    _    _     ", 10, 13 ; , 10, 13 ; Isso quebra a linha
             db 3 dup(" "),"/ __| __ _ _ __ _ _ __ | |__| |___ ", 10, 13            ; Verificar para usar na versao final
@@ -24,25 +27,25 @@ arte_titulo db 3 dup(" ")," ___                    _    _     ", 10, 13 ; , 10, 
        
 tamanho_arte equ $ - arte_titulo
 
-arte_fase_1 db "  ___               _ ", 10, 13
-            db " | __|_ _ ___ ___  / |", 10, 13
-            db " | _/ _` (_-</ -_) | |", 10, 13
-            db " |_|\__,_/__/\___| |_|", 10, 13
+arte_f1 db 10 dup(" ")," ___               _ ", 10, 13
+        db 10 dup(" "),"| __|_ _ ___ ___  / |", 10, 13
+        db 10 dup(" "),"| _/ _` (_-</ -_) | |", 10, 13
+        db 10 dup(" "),"|_|\__,_/__/\___| |_|", 10, 13
             
-tamanho_fase1 equ $ - arte_fase_1
+tamanho_f1 equ $ - arte_f1
 
-arte_fase_2 db " ___               ___ ", 10, 13
-            db "| __|_ _ ___ ___  |_  )", 10, 13
-            db "| _/ _` (_-</ -_)  / / ", 10, 13
-            db "|_|\__,_/__/\___| /___|", 10, 13
+arte_f2 db " ___               ___ ", 10, 13
+        db "| __|_ _ ___ ___  |_  )", 10, 13
+        db "| _/ _` (_-</ -_)  / / ", 10, 13
+        db "|_|\__,_/__/\___| /___|", 10, 13
             
-tamanho_fase2 equ $ - arte_fase_2
+tamanho_f2 equ $ - arte_f2
 
-arte_fase_3 db "  ___               ____ ", 10, 13
-            db " | __|_ _ ___ ___  |__ / ", 10, 13
-            db " | _/ _` (_-</ -_)  |_ \ ", 10, 13
-            db " |_|\__,_/__/\___| |___/ ", 10, 13
-tamanho_fase3 equ $ - arte_fase_3
+arte_f3 db "  ___               ____ ", 10, 13
+        db " | __|_ _ ___ ___  |__ / ", 10, 13
+        db " | _/ _` (_-</ -_)  |_ \ ", 10, 13
+        db " |_|\__,_/__/\___| |___/ ", 10, 13
+tamanho_f3 equ $ - arte_f3
             
 ;  _____  _____  __  __  _____    _____  __ __  _____  _____ 
 ; /   __\/  _  \/  \/  \/   __\  /  _  \/  |  \/   __\/  _  \
@@ -72,7 +75,7 @@ tamanho_sair equ $-btn_sair
 
 
 ;FORMULA BASICA DE POSICIONAMENTO NA TELA: LINHA * 320 + COLUNA.
-; 13 linhas ? 29 colunas
+; 13 linhas x 29 colunas
 nave db 09H,09H,09H,09H,09H,09H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H
      db 00H,09H,09H,09H,09H,09H,09H,09H,00H,00H,00H,00H,00H,00H,00H,0CH,0CH,0CH,0CH,00H,0EH,0EH,0EH,00H,00H,00H,00H,00H,00H
      db 00H,00H,08H,09H,09H,09H,09H,09H,09H,00H,00H,00H,0CH,0CH,0CH,0CH,0CH,0CH,0CH,00H,0EH,0EH,0EH,0EH,0EH,0EH,00H,00H,00H
@@ -90,8 +93,8 @@ nave db 09H,09H,09H,09H,09H,09H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,
 nave_tamanho equ $-nave
 
 
-; ========= METEORO 13x29 (valores em 00H..0FH) =========
-; 13 linhas ? 29 colunas
+; ========= METEORO 13x29=========
+; 13 linhas x 29 colunas
 meteoro db 00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,05H,05H,05H,05H,05H,08H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H
         db 00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,05H,0DH,0DH,0DH,05H,05H,08H,00H,00H,05H,05H,00H,00H,00H,00H,00H,00H,00H,00H
         db 00H,00H,00H,00H,00H,00H,00H,00H,05H,05H,0CH,0DH,05H,05H,05H,0CH,0CH,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H
@@ -109,14 +112,37 @@ meteoro db 00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,05H,05H,05H,05H,05H,08H,0
 meteoro_tamanho equ $-meteoro
 
 
+
+
+;==== ALIEN 13x29 (0=preto, 2=verde, Ah=verde claro, Dh=magenta, Eh=amarelo) ====
+alien  db 00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h
+       db 00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,02h,0Ah,0Ah,0Ah,02h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h
+       db 00h,00h,00h,00h,00h,00h,00h,00h,02h,0Ah,0Eh,0Eh,0Eh,0Dh,0Dh,0Eh,0Ah,02h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h
+       db 00h,00h,00h,00h,00h,00h,00h,02h,0Ah,0Eh,0Eh,0Eh,0Dh,02h,0Ah,0Eh,0Eh,0Eh,0Ah,02h,00h,00h,00h,00h,00h,00h,00h,00h,00h
+       db 00h,00h,00h,00h,00h,00h,02h,0Ah,0Eh,0Eh,0Dh,0Dh,02h,02h,0Ah,0Eh,0Dh,0Eh,0Eh,0Eh,0Ah,02h,00h,00h,00h,00h,00h,00h,00h
+       db 00h,00h,00h,00h,00h,02h,0Ah,0Eh,0Eh,0Eh,0Eh,0Eh,0Ah,02h,02h,0Ah,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Ah,02h,0Eh,0Eh,00h,00h,00h
+       db 00h,00h,00h,00h,02h,0Ah,0Eh,0Eh,0Dh,0Dh,0Eh,0Eh,0Eh,0Ah,02h,02h,0Ah,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Ah,02h,00h
+       db 00h,00h,00h,00h,02h,0Ah,0Eh,0Eh,0Eh,0Dh,0Dh,0Dh,0Eh,0Eh,0Ah,02h,0Ah,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Ah,02h,00h,00h
+       db 00h,00h,00h,00h,00h,02h,0Ah,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Ah,02h,0Ah,0Eh,0Eh,0Eh,0Eh,0Eh,0Ah,02h,00h,00h,00h,00h
+       db 00h,00h,00h,00h,00h,00h,02h,0Ah,0Eh,0Eh,0Dh,0Dh,0Eh,0Eh,0Eh,0Eh,0Ah,02h,0Ah,0Eh,0Eh,0Eh,0Ah,02h,00h,00h,00h,00h,00h
+       db 00h,00h,00h,00h,00h,00h,00h,02h,0Ah,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Ah,02h,00h,02h,0Eh,0Eh,0Ah,02h,00h,00h,00h,00h,00h,00h
+       db 00h,00h,00h,00h,00h,00h,00h,00h,02h,0Ah,0Eh,0Eh,0Eh,0Ah,02h,00h,00h,00h,00h,02h,0Ah,02h,00h,00h,00h,00h,00h,00h,00h
+       db 00h,00h,00h,00h,00h,00h,00h,00h,00h,02h,02h,0Ah,02h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h
+alien_tamanho equ $ - alien
+
+
+alien_tamanho equ $ - alien
+
+;POSICOES 
 nave_posicao dw 0
 meteoro_posicao dw 0
+alien_posicao dw 0
+alien_y dw 0
+alien_x dw 0
+alien_direction dw 1 ;inicia indo para esquerda
         
-.code  
-
-
+.code
 ; Funcao generica que escreve Strings com cor na tela
-
 ESCREVE_STRING proc 
     push AX
     push BX
@@ -124,10 +150,14 @@ ESCREVE_STRING proc
     push ES
     push SI
     push BP
+    push BX
+    
+    mov BX, DS
+    mov ES, BX
 
     mov AH, 13h ;escreve string com atributos de cor
     mov AL, 01h ;modo: atualiza o cursor apos a escrita   
-           
+    pop BX  
     xor BH, BH  ;pagina de video 0
     int 10h     ; Interrupcao para escrever a string
     
@@ -146,11 +176,14 @@ LIMPA_TELA proc
     push AX
     push DI
     
-    mov AX,0H
+    mov AX, 0A000h
+    mov ES, AX
+    
+    xor DI, DI
+    xor AX, AX
     CLD ;zera o DF, DF = 0 avanca e DF = 1 volta
     
-    
-    mov CX,4  ;como avanca +2 em stoswORD precisa percorrer 32k nao 64k
+    mov CX,32000  ;como avanca +2 em stoswORD precisa percorrer 32k nao 64k
     mov DI,0
 
     rep stosw  ;repete CX vezes: [ES:DI] = AX; DI += 2. 
@@ -178,11 +211,11 @@ JOGAR_SAIR proc                     ; Verifica qual opcao esta marcada
     
     INICIA_JOGO_F1:                    ; Limpa a tela e desenha a fase 1
         call LIMPA_TELA
-        mov DH, 8
+        mov DH, 10
         mov DL, 0
         mov BL, 04H
-        mov BP, offset arte_fase_1
-        mov CX, tamanho_arte
+        mov BP, offset arte_f1
+        mov CX, tamanho_f1
         call ESCREVE_STRING
         
         call CARREGA_FASE 
@@ -277,9 +310,9 @@ BUSCA_INTERACAO proc ; Cria pausas para ver se houve interacao no teclado
     push CX
     push DX
     
-    mov AH, 86h
-    mov CX, 0       ; Parte alta do tempo
+    xor CX, CX      ; Parte alta do tempo
     mov DX, [fps]   ; Parte baixa do tempo
+    mov AH, 86h
     int 15h
     
     pop DX
@@ -288,41 +321,26 @@ BUSCA_INTERACAO proc ; Cria pausas para ver se houve interacao no teclado
 endp
 
 JOGO proc                       ; Carrega a tela inicial do jogo (menu)
-    call LIMPA_TELA
-
-    
-    ;
-    ; Fazer as artes das naves e meteoro
-    ;
-    
-    
-    mov DH, 21
-    mov BL, 15
-    mov BP, offset btn_sair
-    mov CX, tamanho_sair
-    call ESCREVE_STRING
-    
-    MENU:
-        mov DX, fps
-        xor CX, CX
+    call ESCREVE_TITULO
+    call ESCREVE_BOTOES  
+    call RESET_ALIEN_MENU  ;posiona nave alien em uma posicao aleatoria na tela   
+    call RESET_POSICOES_MENU    ;posiciona nave e meteoro nas extremidades
+     
+    MENU_JOGO:
         call BUSCA_INTERACAO
         call INTERAGE_MENU
+        call MENU_ANIMATION
         jne CONTINUA_LOOP
     
     CONTINUA_LOOP:
         call VERIFICA_OPCAO
-        jmp MENU
+        jmp MENU_JOGO
 
     ret
 endp
 
-
-
-
  
 ESCREVE_TITULO proc ;prepara registradores pra executar o call print
-    
-    
     mov AX,DS
     mov ES,AX
     
@@ -332,7 +350,6 @@ ESCREVE_TITULO proc ;prepara registradores pra executar o call print
     xor DX,DX ;zerando o registrador DX -> DH=linha/DL=coluna
     
     call ESCREVE_STRING      
-        
     
     ret
 endp 
@@ -340,52 +357,45 @@ endp
 ESCREVE_BOTOES proc
     push AX
     
-    mov BL, 0FH;cor
-    mov AH, op_menu
+    mov BL, 0FH ;cor
+    mov AH, menu
     
     cmp AH, 1     
     
     jne INICIA_BTN
     mov BL, 0CH
 
-INICIA_BTN:
-    
-    mov BP, offset btn_jogar 
-    mov CX, tamanho_jogar
-    
-    xor DL,DL ;coluna = 0 | Modo 13h (320?200): grade 40?25 (colunas 0..39, linhas 0..24).
-    mov DH,18 ;linha = 18 |
-    
-    call ESCREVE_STRING
-    
-    mov BL, 0FH
-    mov AH, op_menu
-    cmp AH, 0
-    jne SAIR_BTN
-    mov BL, 0CH
-    
-SAIR_BTN:
-   
-   mov BP, offset btn_sair
-   mov CX, tamanho_sair
-   xor DL, DL ;colunha =0;
-   mov DH, 21 ;linha
-   
-   call ESCREVE_STRING
-   
-   
-   pop AX      
-    
+    INICIA_BTN:
+        mov BP, offset btn_jogar 
+        mov CX, tamanho_jogar
+        
+        xor DL,DL ;coluna = 0 | Modo 13h (320?200): grade 40?25 (colunas 0..39, linhas 0..24).
+        mov DH,18 ;linha = 18 |
+        call ESCREVE_STRING
+        
+        mov BL, 0FH
+        mov AH, menu
+        cmp AH, 0
+        jne SAIR_BTN
+        mov BL, 0CH
+        
+    SAIR_BTN:
+       mov BP, offset btn_sair
+       mov CX, tamanho_sair
+       xor DL, DL ;colunha =0;
+       mov DH, 21 ;linha
+       call ESCREVE_STRING
+       
+   pop AX
    ret
 endp 
 
 REINICIA_FASE proc  ;RESET_SECTOR
     mov fase, 1
     
-  ret
+    ret
 endp
 
- 
 ;INT 1AH - CLOCK 00H - GET TIME OF DAY
 ;Obtem os valores do controlador do relogio
 ;do sistema.
@@ -395,7 +405,7 @@ SEED_FROM_TICKS proc  ;SYSTIME_SEED
     push DX
     mov  AH, 00h
     int  1Ah              ; CX:DX = ticks desde 00:00
-    mov  seed, DX         
+    mov  seed, DX
     pop  DX
     pop  CX
     pop  AX
@@ -403,83 +413,153 @@ SEED_FROM_TICKS proc  ;SYSTIME_SEED
     ret
 endp
 
+;proc que usa LCG para gerar um numero pseudoaleatorio de 16 bits sem sinal retornado em AX
+RAND_16 proc
+    
+    mov AX,39541
+    mul seed
+    add AX, 16259
+    mov seed,AX
+    
+
+    ret
+endp
+
+;proc que retorna um numero de 8 bit sem sinal em AL,
+;AH = passado como parametro sendo o valor maximo,
+;AL = retorno, entre 0 e AL
+RAND_8 proc
+
+   push BX
+   push CX
+   push DX
+   push AX
+   
+   xor CX,CX
+   mov CL,AH ;salva o max em CL
+   
+   call RAND_16; atualiza o seed e retorna UINT16 em AX
+   
+   xor DX,DX ;prepara DX para receber o resto DX = resto da divisao, entre 0...AH
+   mov BX,CX
+   div BX
+   
+   pop AX 
+   
+   mov AL,DL ;passa para AL o numero pseudoaleatorio
+   
+   pop DX
+   pop CX
+   pop BX
+
+    ret
+endp
 ;proc que reposiciona naves e objetos no menu inicial
-;Nave aliada: move-se da esquerda para a direita,
-;desaparecendo ao atingir o limite direito da tela e reaparecendo 
-;novamente ???????????? esquerda.
-
-;Meteoro: realiza o movimento inverso, deslocando-se
-;da direita para a esquerda, desaparecendo no limite esquerdo
-; e reaparecendo no lado direito. 
-
 RESET_POSICOES_MENU proc
     
     ;FORMULA BASICA DE POSICIONAMENTO NA TELA: LINHA * 320 + COLUNA.
     push AX   
     
     xor AX,AX ;zera antes 
-    
-    mov AX, 70*320 ; Y=70 X = 0
-    
-    mov nave_posicao, AX 
+    mov AX, 50*320 
+    mov nave_posicao, AX ;posiciona a nave
      
-    add AX, 319 ;vai ate o fim da linha onde vem o meteoro 
- 
-     
-    add AX, 40*320  ;40 pixel pra baixo da nave, tem que multiplicar por 32 
+    add AX, 291 ;vai ate o fim da linha onde vem o meteoro 
+    add AX, 20*320  ;20 pixel pra baixo da nave, tem que multiplicar por 320 
+    mov meteoro_posicao, AX  ;posiciona o meteoro
     
-   
-    mov meteoro_posicao, AX   
-       
-       
+      
     pop AX
     
   ret
 endp
 
-;proc que "limpa" 13x29 pixeis na posicao DI
+;proc que redefine a posicao do alien no menu inicial
+RESET_ALIEN_MENU proc
+    
+    push AX
+    push DX
+    push BX
+    
+    xor AX,AX
+    mov AH, 133 ;AH = MAX
+    
+    call RAND_8 ; retorna um valor peseudoaleatorio em AL onde AL < AH
+    cmp AL,90 ; se AL < 83 -> sendo 83 = 70 do inicio do meteoro + 13 altura do meteoro
+    jae Y_OK 
+    mov AL,90;come??a depois do meteoro
+     
+Y_OK:
+    xor DX,DX
+    mov DL,AL
+    mov alien_y,DX ;passa altura minima para Y
+    
+    mov AH,255 ; max largura
+    call RAND_8
+    
+    cmp AL,50 ;coluna minima 29
+    jae X_OK
+    mov AL,50
+X_OK:
+    xor DX,DX
+    mov DL,AL
+    mov alien_x,DX ;coluna minima para X
+    
+    
+    mov BX,320 ;adiciona 320 que o maximo de deslocamento por linha
+    
+    mov AX,alien_y ; move o valor em alien_y para AX
+    mul BX ;multiplica alien_y em AX para obter a linha correta, ja que a formula de deslocamento ? Y*320 + X
+       
+    add AX,alien_x
+  
+    mov alien_posicao, AX
+    
+    mov alien_direction,1
+
+    
+
+    pop BX
+    pop DX
+    pop AX
+    
+   ret
+endp 
+
+
+;proc que limpa 13x29 pixeis na posicao DI
 ;DI = POSICAO
 LIMPA_13x29 proc;            
-     push AX
-     push CX
-     push DI
-     push ES
-       
-     CLD
-       
-     mov AX, 0A000H;MEMORIA DE VIDEO
-     mov ES, AX
-     mov CX, 13
-     xor AX,AX
-     
-     
-LIMPA_LOOP:
+    push AX
+    push CX
+    push DI
+    push ES
+    
+    mov AX, 0A000H
+    mov ES, AX
+    mov CX, 13
+
+LIMPA_LINHA:
     push CX
     mov CX, 29
-   
-    
-    rep stosb;rep stosb grava o byte de AL em memoria a partir de ES:DI, CX vezes
-    
-    add DI, 301
+    xor AX, AX
+    rep stosb
+    add DI, 291
     pop CX
-    loop LIMPA_LOOP
-    
-     
-     
-     pop ES
-     pop DI
-     pop CX
-     pop AX
+    loop LIMPA_LINHA
 
+    pop ES
+    pop DI
+    pop CX
+    pop AX
+    ret
 
   ret
 endp
 
-
 ;proc que desenha um elemento na tela utilizando rep movsb ;DS:SI -> ES:DI 
 ; AX = posicao atual do elemento
 ; SI = offset do elemento no DS
-
 DESENHA proc
      push BX
      push CX
@@ -502,75 +582,146 @@ DESENHA proc
      
      push AX
      
-LINHA_LOOP:
-     mov CX,29 ;largura 29
-     rep movsb ;DS:SI -> ES:DI 
-     add DI, 320-29  ;+320 avanca 1 linha - 29 para ir na posicao correta do inicio da nave
-     
-     dec DX ;terminou uma linha decrementa o contador de altura 
-     jnz LINHA_LOOP 
-     
-     pop AX
-     pop DS
-     pop ES
-     pop DI
-     pop DX
-     pop CX
-     pop BX
+    LINHA_LOOP:
+         mov CX,29 ;largura 29
+         rep movsb ;DS:SI -> ES:DI 
+         add DI, 320-29  ;+320 avanca 1 linha - 29 para ir na posicao correta do inicio da nave
+         
+         dec DX ;terminou uma linha decrementa o contador de altura 
+         jnz LINHA_LOOP 
+         
+    pop AX
+    pop DS
+    pop ES
+    pop DI
+    pop DX
+    pop CX
+    pop BX
      
     ret
 endp
+
+MENU_ANIMATION proc
+    MOVE_NAVE:
+        mov AX, nave_posicao
+        mov DI, AX   
         
-NAVE_METEORO_MENU proc
+        call LIMPA_13x29; apaga 13x29 na posicao DI.
+        
+        cmp AX, 50*320+291 ;LINHA 70 + COLUNA = 291 compara se a nave chegou na borda direita
+        je MOVE_METEORO
+        
+        inc nave_posicao ;move 1 pixel
+        inc AX ;move tambem AX 1 pixel 
+        
+        mov SI, offset nave ;prepara SI para MOVSB Move de DS:SI -> ES:DI
+        call DESENHA; RENDER_SPRITE
     
-   
-    mov AX, nave_posicao
-    mov DI, AX
-    call LIMPA_13x29; apaga 13x29 na posicao DI.
+      
     
-    cmp AX, 70*320+291 ;70*320 = LINHA 70 + COLUNA = 291compara se a nave chegou na borda direita
-  ;  je MOVE_METEORO
+    MOVE_METEORO:
+        mov AX, meteoro_posicao
+        mov DI, AX;move a posicao do meteoro para DI
+        
+        push AX
+        cmp AX, 70*320 ;linha 70 = 50 da nave + 20 do reset posicoes
+        pop AX
+        
+        je RESET_NAVE_METEORO
+        
+        call LIMPA_13x29; apaga 13x29 na posicao DI.
+            
+        ;meteoro vem pra direita    
+        dec meteoro_posicao
+        dec AX
+        
+        mov SI, offset meteoro
+        call DESENHA; RENDER_SPRIT
+        
+        
+     ;refazer    
+     MOVE_ALIEN:
     
-    inc nave_posicao ;move 1 pixel
-    inc AX ;move tambem AX 1 pixel 
+     mov DX,alien_direction
+     cmp DX,1   
+     jne ALIEN_DIREITA
+     
+        mov AX, alien_posicao
+        mov DI, AX;move a posicao do meteoro para DI
+        
+        mov DX,alien_x 
+         
+        push AX
+        cmp DX,0 ;Chegou na borda da esquerda     
+        pop AX
+        
+        je RESET_ALIEN_DIRECTION
+        
+        call LIMPA_13x29; apaga 13x29 na posicao DI.
+            
+        ;alien vem pra esquerda    
+        dec alien_posicao
+        dec AX
+        dec alien_x
+        
+        mov SI, offset alien
+        call DESENHA; RENDER_SPRIT
+        
+        jmp END_POS_UPDATE
+        
+ ALIEN_DIREITA:
+        mov AX, alien_posicao
+        mov DI, AX;move a posicao do aliwn para DI
+        mov DX,alien_x  
+        push AX
+        cmp DX,291 ;Chegou na borda da esquerda     
+        pop AX     
+        je RESET_ALIEN
+        
+        call LIMPA_13x29; apaga 13x29 na posicao DI.
+            
+        ;alien vem pra direita    
+        inc alien_posicao
+        inc AX
+        inc alien_x
+        
+        mov SI, offset alien
+        call DESENHA; RENDER_SPRIT 
+         jmp END_POS_UPDATE
     
-    mov SI, offset nave ;prepara SI para MOVSB Move de DS:SI -> ES:DI
-    call DESENHA; RENDER_SPRITE
+  RESET_ALIEN_DIRECTION:
+        mov alien_direction,2
+        jmp END_POS_UPDATE
+        
+  RESET_ALIEN:
+        call LIMPA_13x29
+        call RESET_ALIEN_MENU
+        jmp END_POS_UPDATE
+        
+  RESET_NAVE_METEORO:
+        call LIMPA_13x29; apaga 13x29 na posicao DI.
+        call RESET_POSICOES_MENU 
     
-    xor CX,CX
-    
-    
-  ret
-endp 
-
-
+    END_POS_UPDATE:
+      ret
+endp
 
 MAIN:
     ;referencia o segmento de dados em ds
     mov AX, @data
     mov DS, AX
     
-    
     ;referencia o segmento de memoria de video em ES
     mov AX, 0A000H
     mov ES, AX
-    
-    
-    ;call SEED_FROM_TICKS
     
     ;inicia modo de video com 0A000H
     xor AH, AH
     mov AL, 13H
     int 10H
     
+    call SEED_FROM_TICKS ;gera um valor para seed dos numeros aleatorios
     
+    call JOGO   
     
-    call ESCREVE_TITULO
-    call ESCREVE_BOTOES  
-    
-    call RESET_POSICOES_MENU ;posiciona na ve e meteoro nas extremidades
-    call NAVE_METEORO_MENU
-    
-    call JOGO
-   
 end MAIN

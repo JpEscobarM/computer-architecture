@@ -322,7 +322,7 @@ JOGO proc                       ; Carrega a tela inicial do jogo (menu)
     call ESCREVE_BOTOES  
     
     call RESET_POSICOES_MENU    ;posiciona nave e meteoro nas extremidades
-     
+ 
     MENU:
         call BUSCA_INTERACAO
         call INTERAGE_MENU
@@ -481,12 +481,10 @@ RESET_ALIEN_MENU proc
     mov AH, 150 ;AH = MAX
     
     call RAND_8 ; retorna um valor peseudoaleatorio em AL onde AL < AH
-    cmp AL,83 ; sendo 83 = 70 do inicio do meteoro + 13 altura do meteoro
+    cmp AL,85 ; se AL < 83 -> sendo 83 = 70 do inicio do meteoro + 13 altura do meteoro
     jae Y_OK 
-    mov AL,85;se for sobrescrever o caminho do meteoro
-   
-    
-    
+    mov AL,85;come?a depois do meteoro
+     
 Y_OK:
     xor DX,DX
     mov DL,AL
@@ -513,7 +511,7 @@ X_OK:
     mov alien_posicao,AX
     mov alien_direction,-1
     
-RESET_ALIEN_MENU_FIM:
+
     pop BX
     pop DX
     pop AX
@@ -653,7 +651,7 @@ MAIN:
     mov AX, 0A000H
     mov ES, AX
     
-    ; call SEED_FROM_TICKS
+    call SEED_FROM_TICKS
     
     ;inicia modo de video com 0A000H
     xor AH, AH
