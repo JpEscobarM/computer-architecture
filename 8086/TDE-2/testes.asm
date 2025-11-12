@@ -112,22 +112,19 @@ meteoro db 00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,05H,05H,05H,05H,05H,08H,0
 meteoro_tamanho equ $-meteoro
 
 
-
-
-;==== ALIEN 13x29 (0=preto, 2=verde, Ah=verde claro, Dh=magenta, Eh=amarelo) ====
-alien  db 00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h
-       db 00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,02h,0Ah,0Ah,0Ah,02h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h
-       db 00h,00h,00h,00h,00h,00h,00h,00h,02h,0Ah,0Eh,0Eh,0Eh,0Dh,0Dh,0Eh,0Ah,02h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h
-       db 00h,00h,00h,00h,00h,00h,00h,02h,0Ah,0Eh,0Eh,0Eh,0Dh,02h,0Ah,0Eh,0Eh,0Eh,0Ah,02h,00h,00h,00h,00h,00h,00h,00h,00h,00h
-       db 00h,00h,00h,00h,00h,00h,02h,0Ah,0Eh,0Eh,0Dh,0Dh,02h,02h,0Ah,0Eh,0Dh,0Eh,0Eh,0Eh,0Ah,02h,00h,00h,00h,00h,00h,00h,00h
-       db 00h,00h,00h,00h,00h,02h,0Ah,0Eh,0Eh,0Eh,0Eh,0Eh,0Ah,02h,02h,0Ah,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Ah,02h,0Eh,0Eh,00h,00h,00h
-       db 00h,00h,00h,00h,02h,0Ah,0Eh,0Eh,0Dh,0Dh,0Eh,0Eh,0Eh,0Ah,02h,02h,0Ah,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Ah,02h,00h
-       db 00h,00h,00h,00h,02h,0Ah,0Eh,0Eh,0Eh,0Dh,0Dh,0Dh,0Eh,0Eh,0Ah,02h,0Ah,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Ah,02h,00h,00h
-       db 00h,00h,00h,00h,00h,02h,0Ah,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Ah,02h,0Ah,0Eh,0Eh,0Eh,0Eh,0Eh,0Ah,02h,00h,00h,00h,00h
-       db 00h,00h,00h,00h,00h,00h,02h,0Ah,0Eh,0Eh,0Dh,0Dh,0Eh,0Eh,0Eh,0Eh,0Ah,02h,0Ah,0Eh,0Eh,0Eh,0Ah,02h,00h,00h,00h,00h,00h
-       db 00h,00h,00h,00h,00h,00h,00h,02h,0Ah,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Ah,02h,00h,02h,0Eh,0Eh,0Ah,02h,00h,00h,00h,00h,00h,00h
-       db 00h,00h,00h,00h,00h,00h,00h,00h,02h,0Ah,0Eh,0Eh,0Eh,0Ah,02h,00h,00h,00h,00h,02h,0Ah,02h,00h,00h,00h,00h,00h,00h,00h
-       db 00h,00h,00h,00h,00h,00h,00h,00h,00h,02h,02h,0Ah,02h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,00h
+alien  db 00h,00h,00h,00h,00h,00h,00h,02h,02h,02h,02h,02h,02h,02h,0Ah,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,00h,00h,00h,00h,00h,00h,00h,00H
+       db 00h,00h,00h,00h,00h,00h,02h,02h,02h,0Ah,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,00h,00h,00h,00h,00h,00H
+       db 00h,00h,00h,00h,02h,02h,02h,02h,02h,0Ah,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,00h,00h,00h,00H
+       db 00h,00h,00h,00h,02h,02h,05h,05h,05h,0Dh,0Eh,0Eh,05h,05h,05h,0Dh,0Eh,0Eh,05h,05h,05h,0Dh,0Eh,0Eh,0Eh,00h,00h,00h,00H
+       db 00h,00h,02h,02h,02h,02h,05h,05h,05h,0Dh,0Eh,0Eh,05h,05h,05h,0Dh,0Eh,0Eh,05h,05h,05h,0Dh,0Eh,0Eh,0Eh,0Eh,0Eh,00h,00H
+       db 00h,00h,02h,02h,02h,02h,05h,05h,05h,0Dh,0Eh,0Eh,05h,05h,05h,0Dh,0Eh,0Eh,05h,05h,05h,0Dh,0Eh,0Eh,0Eh,0Eh,0Eh,00h,00H
+       db 02H,02H,02H,02H,02H,02H,02H,02H,02H,02H,02H,02H,02H,0Ah,0Ah,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh
+       db 02H,02H,02H,02H,02H,02H,02H,02H,02H,02H,02H,02H,02H,0Ah,0Ah,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0Eh,0EH
+       db 00h,00h,00h,00h,05h,05h,05h,0Dh,02h,02h,0Ah,0Eh,0Eh,0Eh,05h,05h,05h,0Dh,0Eh,0Eh,0Eh,0Eh,00h,00h,00h,00h,00h,00h,00H
+       db 00h,00h,00h,00h,05h,05h,05h,0Dh,02h,02h,0Ah,0Eh,0Eh,0Eh,05h,05h,05h,0Dh,0Eh,0Eh,0Eh,0Eh,00h,00h,00h,00h,00h,00h,00H
+       db 00h,00h,00h,00h,05h,05h,05h,0Dh,02h,02h,0Ah,0Eh,0Eh,0Eh,05h,05h,05h,0Dh,0Eh,0Eh,0Eh,0Eh,00h,00h,00h,00h,00h,00h,00H
+       db 00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,02h,02h,02h,0Ah,0Ah,0Eh,0Eh,0Eh,0Eh,00h,00h,00h,00h,00h,00h,00h,00h,00h,00H
+       db 00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,02h,02h,02h,0Ah,0Ah,0Eh,0Eh,0Eh,0Eh,00h,00h,00h,00h,00h,00h,00h,00h,00h,00H ;come?ar de baixo a 
 alien_tamanho equ $ - alien
 
 
