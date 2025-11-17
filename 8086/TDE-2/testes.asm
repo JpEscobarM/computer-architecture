@@ -5,7 +5,7 @@
 
 
 .data
-menu db 1
+op_menu db 1
 
 seed dw 0 
       
@@ -14,11 +14,22 @@ fase db 1 ;indicia fase atual
 menu_selecao db 0   ; 0 = Jogar, 1 = Sair
 inicia_jogo  db 0   ; Flag para iniciar o jogo
 fps dw 10000        ; tempo em microsegundos (/10 para frames por segundo)
+tempo_tela_fase dd 1000 * 1000 * 1
 
-SCR_W equ 320 ;COLUNAS
-SCR_H equ 200 ;QTD LINHAS
-SPR_W equ 29  ;LARGURA NAVE/METEORO/ALIEN
-SPR_H equ 13  ;ALTURA NAVE/METEORO/ALIEN
+largura_video dw 320
+altura_video dw 200
+
+nave_posicao dw 0
+nave_inimica_posicao dw 0
+meteoro_posicao dw 0
+      
+
+
+alien_posicao dw 0
+alien_y dw 0
+alien_x dw 0
+alien_direction dw 1 ;1 = esquerda, 2 = direita
+
       
 arte_titulo db 3 dup(" ")," ___                    _    _     ", 10, 13 ; , 10, 13 ; Isso quebra a linha
             db 3 dup(" "),"/ __| __ _ _ __ _ _ __ | |__| |___ ", 10, 13            ; Verificar para usar na versao final
@@ -34,17 +45,17 @@ arte_f1 db 10 dup(" ")," ___               _ ", 10, 13
             
 tamanho_f1 equ $ - arte_f1
 
-arte_f2 db " ___               ___ ", 10, 13
-        db "| __|_ _ ___ ___  |_  )", 10, 13
-        db "| _/ _` (_-</ -_)  / / ", 10, 13
-        db "|_|\__,_/__/\___| /___|", 10, 13
+arte_f2 db 10 dup(" ")," ___               ___ ", 10, 13
+        db 10 dup(" "),"| __|_ _ ___ ___  |_  )", 10, 13
+        db 10 dup(" "),"| _/ _` (_-</ -_)  / / ", 10, 13
+        db 10 dup(" "),"|_|\__,_/__/\___| /___|", 10, 13
             
 tamanho_f2 equ $ - arte_f2
 
-arte_f3 db "  ___               ____ ", 10, 13
-        db " | __|_ _ ___ ___  |__ / ", 10, 13
-        db " | _/ _` (_-</ -_)  |_ \ ", 10, 13
-        db " |_|\__,_/__/\___| |___/ ", 10, 13
+arte_f3 db 10 dup(" ")," ___               ____ ", 10, 13
+        db 10 dup(" "),"| __|_ _ ___ ___  |__ / ", 10, 13
+        db 10 dup(" "),"| _/ _` (_-</ -_)  |_ \ ", 10, 13
+        db 10 dup(" "),"|_|\__,_/__/\___| |___/ ", 10, 13
 tamanho_f3 equ $ - arte_f3
             
 ;  _____  _____  __  __  _____    _____  __ __  _____  _____ 
@@ -75,7 +86,7 @@ tamanho_sair equ $-btn_sair
 
 
 ;FORMULA BASICA DE POSICIONAMENTO NA TELA: LINHA * 320 + COLUNA.
-; 13 linhas x 29 colunas
+; 13 linhas ? 29 colunas
 nave db 09H,09H,09H,09H,09H,09H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H
      db 00H,09H,09H,09H,09H,09H,09H,09H,00H,00H,00H,00H,00H,00H,00H,0CH,0CH,0CH,0CH,00H,0EH,0EH,0EH,00H,00H,00H,00H,00H,00H
      db 00H,00H,08H,09H,09H,09H,09H,09H,09H,00H,00H,00H,0CH,0CH,0CH,0CH,0CH,0CH,0CH,00H,0EH,0EH,0EH,0EH,0EH,0EH,00H,00H,00H
@@ -93,8 +104,8 @@ nave db 09H,09H,09H,09H,09H,09H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,
 nave_tamanho equ $-nave
 
 
-; ========= METEORO 13x29=========
-; 13 linhas x 29 colunas
+; ========= METEORO 13x29 (valores em 00H..0FH) =========
+; 13 linhas ? 29 colunas
 meteoro db 00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,05H,05H,05H,05H,05H,08H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H
         db 00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,05H,0DH,0DH,0DH,05H,05H,08H,00H,00H,05H,05H,00H,00H,00H,00H,00H,00H,00H,00H
         db 00H,00H,00H,00H,00H,00H,00H,00H,05H,05H,0CH,0DH,05H,05H,05H,0CH,0CH,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H
@@ -127,16 +138,7 @@ alien  db 00h,00h,00h,00h,00h,00h,00h,02h,02h,02h,02h,02h,02h,02h,0Ah,0Eh,0Eh,0E
        db 00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,02h,02h,02h,0Ah,0Ah,0Eh,0Eh,0Eh,0Eh,00h,00h,00h,00h,00h,00h,00h,00h,00h,00H ;come?ar de baixo a 
 alien_tamanho equ $ - alien
 
-
-alien_tamanho equ $ - alien
-
-;POSICOES 
-nave_posicao dw 0
-meteoro_posicao dw 0
-alien_posicao dw 0
-alien_y dw 0
-alien_x dw 0
-alien_direction dw 1 ;inicia indo para esquerda
+        
         
 .code
 ; Funcao generica que escreve Strings com cor na tela
@@ -191,9 +193,96 @@ LIMPA_TELA proc
     ret
 endp
 
-CARREGA_FASE proc       ; Espera 4s e depois limpa a tela
-    mov CX, 003Dh
-    mov DX, 0900h
+VERIFICA_TECLADO_JOGO proc
+    push AX
+    
+    mov AH, 01h     ; Verifica se h? tecla
+    int 16h
+    jz FIM_TECLADO_JOGO ; Se n?o, sai
+    
+    xor AH, AH      ; Se sim, l? a tecla
+    int 16h
+    
+    ; O PDF exige movimento nas 4 setas
+    cmp AH, 48H     ; Seta Cima?
+    je SETA_CIMA
+    
+    cmp AH, 50H     ; Seta Baixo?
+    je SETA_BAIXO
+    
+    cmp AH, 4BH     ; Seta Esquerda?
+    je SETA_ESQUERDA
+    
+    cmp AH, 4DH     ; Seta Direita?
+    je SETA_DIREITA
+    
+    jmp FIM_TECLADO_JOGO ; Ignora outras teclas
+    
+    SETA_CIMA:
+        mov AX, 0 ; 0 = Cima
+        call MOVER_VERTICAL
+        jmp FIM_TECLADO_JOGO
+        
+    SETA_BAIXO:
+        mov AX, 1 ; 1 = Baixo
+        call MOVER_VERTICAL
+        jmp FIM_TECLADO_JOGO
+
+    SETA_ESQUERDA:
+        mov AX, 0 ; 0 = Esquerda
+        call MOVER_HORIZONTAL
+        jmp FIM_TECLADO_JOGO
+
+    SETA_DIREITA:
+        mov AX, 1 ; 1 = Direita
+        call MOVER_HORIZONTAL
+        jmp FIM_TECLADO_JOGO
+        
+    FIM_TECLADO_JOGO:
+        pop AX
+        ret
+    endp
+
+MOVER_VERTICAL proc
+    ; AX=0 (Cima), AX=1 (Baixo)
+    push BX
+    mov BX, [largura_video]
+    
+    cmp AX, 0
+    je MOVER_CIMA
+    MOVER_BAIXO:
+        add [nave_posicao], BX
+        jmp SAIR_MOVIMENTO_VERTICAL
+    
+    MOVER_CIMA:
+        sub [nave_posicao], BX
+        jmp SAIR_MOVIMENTO_VERTICAL
+    
+    SAIR_MOVIMENTO_VERTICAL:
+        pop BX
+        ret
+endp
+
+MOVER_HORIZONTAL proc
+    ; AX=0 (Esquerda), AX=1 (Direita)
+    cmp AX, 0
+    je MOVER_ESQUERDA
+    
+    MOVER_DIREITA:
+        inc [nave_posicao]
+        jmp SAIR_MOVIMENTO_HORIZONTAL
+    
+    MOVER_ESQUERDA:
+        dec [nave_posicao]
+        jmp SAIR_MOVIMENTO_HORIZONTAL
+    
+    SAIR_MOVIMENTO_HORIZONTAL:
+        ret
+endp
+
+CARREGA_FASE proc       ; Espera X segundos e depois limpa a tela
+    mov CX, WORD PTR [tempo_tela_fase + 2]
+    mov DX, WORD PTR [tempo_tela_fase]
     mov AH, 86h
     int 15h
     
@@ -201,22 +290,66 @@ CARREGA_FASE proc       ; Espera 4s e depois limpa a tela
     ret
 endp
 
+PARTIDA proc        
+    JOGANDO:
+        call BUSCA_INTERACAO
+        
+        mov DI, [nave_posicao]
+        call LIMPA_13x29; apaga 13x29 na posicao DI.
+        
+        call VERIFICA_TECLADO_JOGO
+        
+        mov AX, [nave_posicao]
+        mov SI, offset nave ;prepara SI para MOVSB Move de DS:SI -> ES:DI
+        call DESENHA; RENDER_SPRITE
+        
+        jmp JOGANDO
+
+    ret
+endp
+
 JOGAR_SAIR proc                     ; Verifica qual opcao esta marcada
     cmp menu_selecao, 1
-    jne INICIA_JOGO_F1
+    jne JOGAR_F1
     call TERMINA_JOGO
     
-    INICIA_JOGO_F1:                    ; Limpa a tela e desenha a fase 1
+    JOGAR_F1:
+        xor inicia_jogo, 1
         call LIMPA_TELA
         mov DH, 10
         mov DL, 0
-        mov BL, 04H
+        mov BL, 0FH
         mov BP, offset arte_f1
         mov CX, tamanho_f1
         call ESCREVE_STRING
         
-        call CARREGA_FASE 
-        xor inicia_jogo, 1
+        call CARREGA_FASE
+        ; call PARTIDA
+        
+    JOGAR_F2:
+        call LIMPA_TELA
+        mov DH, 10
+        mov DL, 0
+        mov BL, 0CH
+        mov BP, offset arte_f2
+        mov CX, tamanho_f2
+        call ESCREVE_STRING
+        
+        call CARREGA_FASE
+        ; call PARTIDA
+        
+    JOGAR_F3:
+        call LIMPA_TELA
+        mov DH, 10
+        mov DL, 0
+        mov BL, 04H
+        mov BP, offset arte_f3
+        mov CX, tamanho_f3
+        call ESCREVE_STRING
+        
+        call CARREGA_FASE
+        call PARTIDA
+        
 
     ret
 endp
@@ -320,10 +453,10 @@ endp
 JOGO proc                       ; Carrega a tela inicial do jogo (menu)
     call ESCREVE_TITULO
     call ESCREVE_BOTOES  
-    call RESET_ALIEN_MENU  ;posiona nave alien em uma posicao aleatoria na tela   
+    call RESET_ALIEN_MENU  ;posiona nave alien em uma posicao aleatoria na tela
     call RESET_POSICOES_MENU    ;posiciona nave e meteoro nas extremidades
      
-    MENU_JOGO:
+    MENU:
         call BUSCA_INTERACAO
         call INTERAGE_MENU
         call MENU_ANIMATION
@@ -331,7 +464,7 @@ JOGO proc                       ; Carrega a tela inicial do jogo (menu)
     
     CONTINUA_LOOP:
         call VERIFICA_OPCAO
-        jmp MENU_JOGO
+        jmp MENU
 
     ret
 endp
@@ -355,7 +488,7 @@ ESCREVE_BOTOES proc
     push AX
     
     mov BL, 0FH ;cor
-    mov AH, menu
+    mov AH, op_menu
     
     cmp AH, 1     
     
@@ -371,7 +504,7 @@ ESCREVE_BOTOES proc
         call ESCREVE_STRING
         
         mov BL, 0FH
-        mov AH, menu
+        mov AH, op_menu
         cmp AH, 0
         jne SAIR_BTN
         mov BL, 0CH
@@ -402,13 +535,14 @@ SEED_FROM_TICKS proc  ;SYSTIME_SEED
     push DX
     mov  AH, 00h
     int  1Ah              ; CX:DX = ticks desde 00:00
-    mov  seed, DX
+    mov  seed, DX         
     pop  DX
     pop  CX
     pop  AX
     
     ret
 endp
+
 
 ;proc que usa LCG para gerar um numero pseudoaleatorio de 16 bits sem sinal retornado em AX
 RAND_16 proc
@@ -451,6 +585,7 @@ RAND_8 proc
 
     ret
 endp
+
 ;proc que reposiciona naves e objetos no menu inicial
 RESET_POSICOES_MENU proc
     
@@ -470,6 +605,7 @@ RESET_POSICOES_MENU proc
     
   ret
 endp
+
 
 ;proc que redefine a posicao do alien no menu inicial
 RESET_ALIEN_MENU proc
@@ -524,7 +660,7 @@ X_OK:
 endp 
 
 
-;proc que limpa 13x29 pixeis na posicao DI
+;proc que "limpa" 13x29 pixeis na posicao DI
 ;DI = POSICAO
 LIMPA_13x29 proc;            
     push AX
@@ -580,7 +716,7 @@ DESENHA proc
      push AX
      
     LINHA_LOOP:
-         mov CX,29 ;largura 29
+         mov CX, 29 ;largura 29
          rep movsb ;DS:SI -> ES:DI 
          add DI, 320-29  ;+320 avanca 1 linha - 29 para ir na posicao correta do inicio da nave
          
@@ -597,6 +733,7 @@ DESENHA proc
      
     ret
 endp
+
 
 MENU_ANIMATION proc
     MOVE_NAVE:
@@ -620,9 +757,9 @@ MENU_ANIMATION proc
         mov AX, meteoro_posicao
         mov DI, AX;move a posicao do meteoro para DI
         
-        push AX
+        ; push AX
         cmp AX, 70*320 ;linha 70 = 50 da nave + 20 do reset posicoes
-        pop AX
+        ;pop AX
         
         je RESET_NAVE_METEORO
         
@@ -648,9 +785,9 @@ MENU_ANIMATION proc
         
         mov DX,alien_x 
          
-        push AX
+        ;push AX
         cmp DX,0 ;Chegou na borda da esquerda     
-        pop AX
+        ;pop AX
         
         je RESET_ALIEN_DIRECTION
         
@@ -670,9 +807,9 @@ MENU_ANIMATION proc
         mov AX, alien_posicao
         mov DI, AX;move a posicao do aliwn para DI
         mov DX,alien_x  
-        push AX
+        ;push AX
         cmp DX,291 ;Chegou na borda da esquerda     
-        pop AX     
+        ;pop AX     
         je RESET_ALIEN
         
         call LIMPA_13x29; apaga 13x29 na posicao DI.
@@ -712,13 +849,13 @@ MAIN:
     mov AX, 0A000H
     mov ES, AX
     
+    call SEED_FROM_TICKS
+    
     ;inicia modo de video com 0A000H
     xor AH, AH
     mov AL, 13H
     int 10H
     
-    call SEED_FROM_TICKS ;gera um valor para seed dos numeros aleatorios
-    
-    call JOGO   
+    call JOGO
     
 end MAIN
