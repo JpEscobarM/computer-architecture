@@ -29,12 +29,29 @@ tiro_flag db 0 ;checa existencia do tiro, s? pode atirar quando tiro_flag == 0
 tiro_desloc dw 0 ;variavel para deslocamento da posicao do tiro
 
 tempo_fase equ 30 ; tempo em segundos de cada fase
+cronometro db 0
+
 
 posicoes_aliens dw 20 dup(0) ; posicao dos aliens
 
+aliens_restante_fase db ?;? inicializada em MOSTRA_SETOR com naves_set1/2/3 (o limite desejado).
+;Ao gerar uma inimiga (GERAR_INIMIGO) voc? decrementa=  consome 1 ?cr?dito? de spawn.
+;Quando a inimiga morre ou sai da tela (LIMPAR_NAVE_INIMIGA e tamb?m no trecho de ?escapou? em MOVIMENTA_INIMIGOS),
+;voc? incrementa =  devolve o cr?dito.
 
-  vidas dup(3)
+  vidas db 3 dup(1)
   vida_posicao_x db 5 ;come?a na coluna 5 x=5 y=0
+    
+  
+  pontos_string db 6 dup (?)
+  tamanho_pontos_string equ $-pontos_string
+  
+   frase_score db "SCORE: "
+  score_tamanho equ $-frase_score
+  frase_tempo db "TEMPO: "
+  tempo_tamanho equ $- frase_tempo
+  frase_pontuacao db "PONTUACAO: "
+  pontuacao_tamanho equ $ - frase_pontuacao
 
 ;=====  
   
@@ -50,13 +67,7 @@ alien_y dw 0
 alien_x dw 0
 alien_direction dw 1 ;1 = esquerda, 2 = direita
 
-  frase_score db "SCORE: "
-  score_tamanho equ $-frase_score
-  frase_tempo db "TEMPO: "
-  tempo_tamanho equ $- frase_tempo
-  frase_pontuacao db "PONTUACAO: "
-  pontuacao_tamanho equ $ - frase_pontuacao
-
+ 
   
   
 arte_titulo db 3 dup(" ")," ___                    _    _     ", 10, 13
@@ -321,7 +332,9 @@ CARREGA_FASE proc       ; Espera X segundos e depois limpa a tela
     ret
 endp
 
-PARTIDA proc        
+PARTIDA proc 
+
+    call MOSTRAR_HEADER ;teste
     JOGANDO:
         call BUSCA_INTERACAO
         
@@ -481,27 +494,166 @@ BUSCA_INTERACAO proc ; Cria pausas para ver se houve interacao no teclado
     ret
 endp
 
-;proc 
-INICIA_FASE proc
+UINT16_TO_STRING proc
+    push AX
+    push BX
+    push CX
+    push DX
     
-    mov qtd_alien,0
-    mov qtd_meteoro,0
-    mov tiro_flag,0
-    mov tiro_desloc, 0
+    mov BX, 10    
+    xor CX, CX
     
-    call INICIALIZA_VAR_FASE
-
- ret
+    cmp AX, 10
+    jnl LACO_DIGITO2
+    
+    cmp AX, 0
+    je LACO_DIGITO2
+    
+    mov DL, '0'
+    mov [DI], DL
+    inc DI
+    
+  LACO_DIGITO2:    
+    xor DX, DX         
+    div BX
+    
+    push DX
+       
+    inc CX
+    
+    cmp AX, 0   
+        
+    jnz LACO_DIGITO2
+                          
+     
+  LACO_ESCRITA2:                    
+    pop DX
+    add DL, '0'
+    mov [DI], DL
+    inc DI
+    dec CX
+    cmp CX, 0
+    jnz LACO_ESCRITA2
+          
+          
+    pop DX
+    pop CX
+    pop BX
+    pop AX
+       
+    ret
 endp
 
+MOSTRAR_HEADER proc
+   mov BP, offset frase_score 
+   mov DH, 0
+   mov DL, 0
+   mov CX, score_tamanho 
+   mov BL, 0FH ;0FH = cor branco
+   call ESCREVE_STRING
+   
+   mov AX, pontos
+   mov DI, OFFSET pontos_string
+   call UINT16_TO_STRING
+   
+   mov BP, offset pontos_string
+   mov DH,0
+   mov DL, score_tamanho
+   mov CX, tamanho_pontos_string
+   mov BL, 02H ;cor verde escuro
+   call ESCREVE_STRING
+   
+   ;falta adicionar pra printar as vidas
+   
+   mov BP, offset frase_tempo
+   mov DH, 0
+   mov DL, 30
+   mov CX, tempo_tamanho
+   mov BL, 0FH 
+   call ESCREVE_STRING
+   
+  ret
+endp
+;ZERA_VARIAVIES_SETOR proc
+;zera as naves aliens inimigas antes de entrar na proxima fase
+ZERAR_ALIENS proc
+    push AX
+    push CX
+    push DI
+    push ES
+    
+    mov AX, @data
+    mov ES,AX
+    lea DI,posicoes_aliens
+    mov CX, LENGTH posicoes_aliens 
+    xor AX,AX
+    cld ;garantindo DF = 0 (avan?ando )
+    
+    rep stosw ;escreve AX (0) em ES:DI, CX vezes
+    
+    pop ES
+    pop DI
+    pop CX
+    pop AX
+    ret
 
+endp
+;MOSTRA_SETOR proc
+; setar qual tela esta (1,2,3)
+INICIANDO_FASE proc
+    mov qtd_alien,0 ;inimigas_vivas_setor
+    mov qtd_meteoro,0 
+    mov tiro_flag,0
+    mov tiro_desloc, 0
+
+    call ZERAR_ALIENS
+    
+    cmp estado,1
+    je FASE_1
+    
+    ;cmp estado,2
+    ;je FASE_1
+    
+   ; cmp estado,3
+   ;je FASE_1
+    
+    
+   ; xor AX,AX
+   ;mov BX,30
+   ;call CALCULA_BONUS_SETOR
+   ;mov venceu, 1
+   ;call VENCEU_PERDEU
+FASE_1:
+    
+       mov qtd_alien,10 ;quantidade de aliens por fase  = mov naves_inimigas_restante_setor, naves_set1 
+  
+      call LIMPA_TELA
+        mov DH, 10
+        mov DL, 0
+        mov BL, 0FH
+        mov BP, offset arte_f1
+        mov CX, tamanho_f1
+        call ESCREVE_STRING
+        
+        call CARREGA_FASE
+        mov pontos,0
+        mov cronometro,tempo_fase
+        
+        mov nave_posicao,320*99 ;inicia nave no meio da tela
+        
+    ret
+endp
 
 ;Proc que realiza o controle de estado do jogo, iniciando fases baseado na flag estado
 JOGO_LOOP proc
- 
+  
+    
+    mov estado,0
+    
 INCREMENTA_SETOR:
-    inc estado
-    ;call INICIA_FASE
+    inc estado ;inicia fases
+    
+    call INICIANDO_FASE;MOSTRA_SETOR
     
 
  ret
