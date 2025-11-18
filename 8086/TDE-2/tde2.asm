@@ -28,9 +28,11 @@ qtd_meteoro dw 0 ;controla a quantidade de meteoros
 tiro_flag db 0 ;checa existencia do tiro, s? pode atirar quando tiro_flag == 0
 tiro_desloc dw 0 ;variavel para deslocamento da posicao do tiro
 
-tempo_fase equ 30 ; tempo em segundos de cada fase
-cronometro db 0
 
+tempo_fase equ 30 ; variavel que define o tempo de cada fase
+cronometro db 0  ;cronometro que ficar? decrementando baseado no tempo_fase
+cronometro_string db 2 dup(?) ;2 casas decimais
+tamanho_cronometro_string equ $-cronometro_string
 
 posicoes_aliens dw 20 dup(0) ; posicao dos aliens
 
@@ -39,8 +41,11 @@ aliens_restante_fase db ?;? inicializada em MOSTRA_SETOR com naves_set1/2/3 (o l
 ;Quando a inimiga morre ou sai da tela (LIMPAR_NAVE_INIMIGA e tamb?m no trecho de ?escapou? em MOVIMENTA_INIMIGOS),
 ;voc? incrementa =  devolve o cr?dito.
 
-  vidas db 3 dup(1)
-  vida_posicao_x db 5 ;come?a na coluna 5 x=5 y=0
+  vidas db 3 dup(1) ;vida = 1 , sem vida = 0
+   
+  vida_posicao_x db 132 ;vetor de posicao de cada vida
+                 db 152
+                 db 172
     
   
   pontos_string db 6 dup (?)
@@ -142,7 +147,19 @@ nave db 09H,09H,09H,09H,09H,09H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,
 
 nave_tamanho equ $-nave
 
+                                       
+vida db 09H,09H,09H,09H,09H,00H,0CH,0CH,0CH,00H,0EH,0EH,0EH,00H,00H,00H
+     db 00H,09H,09H,09H,0CH,0CH,0CH,0CH,0CH,00H,0EH,00H,00H,0EH,0EH,00H
+     db 00H,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,00H,0EH,00H,0EH,0EH,00H,0EH
+     db 0EH,0EH,0EH,0EH,0CH,0CH,0CH,0CH,0CH,0CH,00H,00H,00H,00H,00H,00H
+     db 00H,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH
+     db 00H,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,00H,00H
+     db 09H,09H,09H,09H,09H,00H,0CH,0CH,0CH,0CH,0CH,0CH,00H,00H,00H,00H
 
+vida_tamanho equ $-vida
+     
+    
+    
 ; ========= METEORO 13x29 (valores em 00H..0FH) =========
 ; 13 linhas x 29 colunas
 meteoro db 00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,05H,05H,05H,05H,05H,08H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H
@@ -334,7 +351,7 @@ endp
 
 PARTIDA proc 
 
-    call MOSTRAR_HEADER ;teste
+    call MOSTRAR_HEADER 
     JOGANDO:
         call BUSCA_INTERACAO
         
@@ -544,6 +561,47 @@ UINT16_TO_STRING proc
     ret
 endp
 
+MOSTRAR_VIDAS proc
+    push ax
+    push bx
+    push cx
+    push dx
+    push si
+
+       
+    xor  BX, BX
+    xor AX,AX
+    mov  CX, 3 ; tr?s vidas
+
+DESENHAR_LOOP2:
+      lea  si, vida  
+
+    
+      mov  AL, [vidas+bx]
+      cmp  AX, 0
+    je   PROXIMA_VIDA ; se destru?da, s? avan?a
+
+   
+    mov  AL, [vida_posicao_x+BX] ;vida_posicao_x = vetor de posicoes na tela de cada vida
+
+
+    ;AX = posicao na tela
+    ;SI = offset no .data do desenho da vida
+    call DESENHA_7x16
+
+PROXIMA_VIDA:
+    inc  bx
+    loop DESENHAR_LOOP2
+
+    pop  si
+    pop  dx
+    pop  cx
+    pop  bx
+    pop  ax
+    ret
+endp
+
+
 MOSTRAR_HEADER proc
    mov BP, offset frase_score 
    mov DH, 0
@@ -563,14 +621,27 @@ MOSTRAR_HEADER proc
    mov BL, 02H ;cor verde escuro
    call ESCREVE_STRING
    
-   ;falta adicionar pra printar as vidas
+   call MOSTRAR_VIDAS
    
    mov BP, offset frase_tempo
    mov DH, 0
-   mov DL, 30
+   mov DL, 32
    mov CX, tempo_tamanho
    mov BL, 0FH 
    call ESCREVE_STRING
+   
+   xor AX,AX
+   mov AL, cronometro
+   mov DI, offset cronometro_string
+   call UINT16_TO_STRING
+    
+   mov BP, OFFSET cronometro_string
+   mov DH, 0
+   mov DL, 38
+   mov CX, tamanho_cronometro_string
+   mov BL, 02H
+   call ESCREVE_STRING
+   
    
   ret
 endp
@@ -654,7 +725,7 @@ INCREMENTA_SETOR:
     inc estado ;inicia fases
     
     call INICIANDO_FASE;MOSTRA_SETOR
-    
+    call MOSTRAR_HEADER
 
  ret
 endp
@@ -943,7 +1014,48 @@ DESENHA proc
     ret
 endp
 
-
+; AX = posicao atual do elemento
+; SI = offset do elemento no DS
+DESENHA_7x16 proc
+     push BX
+     push CX
+     push DX
+     push DI
+     push ES
+     push DS
+     push AX ;salva a posicao
+      
+     mov AX, @data
+     mov DS, AX
+     
+     mov AX, 0A000H;SEGMENTO DE VIDEO
+     mov ES, AX
+     
+     
+     pop AX ;volta a posicao salva
+     mov DI, AX
+     MOV DX, 7 ;altura
+     
+     push AX
+     
+ LINHA_LOOP2:
+         mov CX, 16 ;largura
+         rep movsb ;DS:SI -> ES:DI 
+         add DI, 320-16  ;+320 avanca 1 linha - tamanho do elemento
+         
+         dec DX ;terminou uma linha decrementa o contador de altura 
+         jnz LINHA_LOOP2 
+         
+    pop AX
+    pop DS
+    pop ES
+    pop DI
+    pop DX
+    pop CX
+    pop BX
+     
+    ret
+endp
 
 
 MENU_ANIMATION proc
@@ -1047,6 +1159,26 @@ MENU_ANIMATION proc
       ret
 endp
 
+
+; recebe em CX:DX o tempo de espera
+SLEEP proc 
+    push CX                 ;salva contexto
+    push DX             
+    push AX             
+      
+    xor CX, CX              ;zera CX, pois o tempo e definido por CX:DX
+    mov DX, fps             ;espera
+    mov AH, 86h             ;configura o modo de espera
+    int 15h                 ;chama a espera no sistema
+    
+    pop AX
+    pop DX
+    pop CX
+    ret
+endp
+
+
+
 MAIN:
     ;referencia o segmento de dados em ds
     mov AX, @data
@@ -1064,5 +1196,8 @@ MAIN:
     int 10H
     
     call JOGO
+    
+  
+
     
 end MAIN
