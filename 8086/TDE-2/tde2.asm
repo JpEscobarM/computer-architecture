@@ -42,7 +42,7 @@ aliens_restante_fase db ?;? inicializada em MOSTRA_SETOR com naves_set1/2/3 (o l
 ;voc? incrementa =  devolve o cr?dito.
 
   vidas db 3 dup(1) ;vida = 1 , sem vida = 0
-   
+  vidas_qtd db 3
   vida_posicao_x db 132 ;vetor de posicao de cada vida
                  db 152
                  db 172
@@ -364,6 +364,7 @@ PARTIDA proc
         mov SI, offset nave ;prepara SI para MOVSB Move de DS:SI -> ES:DI
         call DESENHA; RENDER_SPRITE
         
+
         jmp JOGANDO
 
     ret
@@ -561,6 +562,57 @@ UINT16_TO_STRING proc
     ret
 endp
 
+;Proc que diminui a quantidade de vidas na tela baseando-se 
+;em vidas_qtd
+DIMINUIR_VIDA proc
+    push AX
+    push BX
+    push CX
+    push DX
+    push DI
+    push ES
+    
+    mov AX, 0A000H
+    mov ES, AX
+    
+    xor BX,BX
+    xor AX,AX
+    
+    mov AL, vidas_qtd
+    cmp AL, 0
+    jz DIMINUIR_FIM ;se a quantidade de vidas = 0 entao pula
+    
+    dec AL ; 0..2
+    mov vidas_qtd, AL ;atualiza qtd
+    
+    mov BL,AL ;BL usado como indice
+    mov vidas[BX],0
+    
+    mov AL, vida_posicao_x[BX] ;DI = posicao atual da vida na tela
+    mov DI,AX
+    mov DX, 7 
+
+DIMINUIR_VIDA_LOOP:
+    mov CX,16
+    mov AL,0
+    rep stosb ;STOSB ESCREVE AL EM ES:DI, CX vezes
+    
+    add DI, 320-16
+    dec DX
+    jnz DIMINUIR_VIDA_LOOP
+    
+    
+DIMINUIR_FIM:
+    pop ES
+    pop DI
+    pop DX
+    pop CX
+    pop BX
+    pop AX
+    
+    ret
+endp
+
 MOSTRAR_VIDAS proc
     push ax
     push bx
@@ -715,20 +767,6 @@ FASE_1:
     ret
 endp
 
-;Proc que realiza o controle de estado do jogo, iniciando fases baseado na flag estado
-JOGO_LOOP proc
-  
-    
-    mov estado,0
-    
-INCREMENTA_SETOR:
-    inc estado ;inicia fases
-    
-    call INICIANDO_FASE;MOSTRA_SETOR
-    call MOSTRAR_HEADER
-
- ret
-endp
 
 JOGO proc                       ; Carrega a tela inicial do jogo (menu)
     call ESCREVE_TITULO
@@ -1160,6 +1198,25 @@ MENU_ANIMATION proc
 endp
 
 
+SLEEP_LENTO proc 
+    push CX
+    push DX
+    push AX
+          
+    mov AX, 0          ; zera lixo em AX (opcional)
+    mov CX, 0FH          ; parte alta -> 0x0007
+    mov DX, 0A120H    ; parte baixa -> 0xA120
+    ; 0x0007A120 = 500.000 ?s ? 0,5 segundo
+
+    mov AH, 86h        ; BIOS wait
+    int 15h
+
+    pop AX
+    pop DX
+    pop CX
+    ret
+SLEEP_LENTO endp
+
 ; recebe em CX:DX o tempo de espera
 SLEEP proc 
     push CX                 ;salva contexto
@@ -1195,9 +1252,14 @@ MAIN:
     mov AL, 13H
     int 10H
     
-    call JOGO
+    ;call JOGO
+    mov CX,3
     
-  
+TESTE:
+    call MOSTRAR_HEADER
+    call SLEEP_LENTO
+    call DIMINUIR_VIDA
+    loop TESTE
 
     
 end MAIN
