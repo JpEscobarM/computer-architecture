@@ -5,20 +5,35 @@
 
 .data
 
+;VARIAVEIS DO TERRENO
+altura_cenario equ 49
 
-cenario_1   db 2 dup (0EH), 2 dup(0EH), 478 dup(00H) 
-            db 2 dup (480 dup(0EH)
-            db 480 dup(09H)
-            db 480 dup(09H)
-  
-      
-
+cor_terreno_2 equ 06H
+cor_terreno_2_borda equ 0CH
 
 scroll_cenario dw 0
+
+terreno_1   db 452 dup(00H), 1 dup(0EH), 27 dup(00H)
+            db 376 dup(00H), 1 dup(0EH), 66 dup(00H), 1 dup(0EH), 8 dup(00H), 1 dup(09H), 27 dup(00H)
+            db 160 dup(00H), 4 dup(0EH), 91 dup(00H), 3 dup(0EH), 117 dup(00H), 1 dup(0EH), 1 dup(09H), 56 dup(00H), 3 dup(0EH), 5 dup(00H), 2 dup(0EH), 1 dup(09H), 1 dup(0EH), 6 dup(00H), 1 dup(0EH), 1 dup(09H), 1 dup(0EH), 26 dup(00H)
+            db 27 dup(00H), 2 dup(0EH), 130 dup(00H), 1 dup(0EH), 4 dup(09H), 3 dup(0EH), 87 dup(00H), 1 dup(0EH), 3 dup(09H), 2 dup(0EH), 24 dup(00H), 3 dup(0EH), 87 dup(00H), 1 dup(0EH), 2 dup(09H), 1 dup(0EH), 54 dup(00H), 1 dup(0EH), 3 dup(09H), 1 dup(0EH), 1 dup(00H), 3 dup(0EH), 4 dup(09H), 1 dup(0EH), 3 dup(00H), 2 dup(0EH), 3 dup(09H), 1 dup(0EH), 25 dup(00H)
+            db 20 dup(00H), 7 dup(0EH), 2 dup(09H), 4 dup(0EH), 1 dup(00H), 1 dup(0EH), 123 dup(00H), 1 dup(0EH), 8 dup(09H), 4 dup(0EH), 1 dup(00H), 4 dup(0EH), 78 dup(00H), 6 dup(09H), 1 dup(0EH), 3 dup(00H), 2 dup(0EH), 1 dup(00H), 1 dup(0EH), 1 dup(00H), 6 dup(0EH), 1 dup(00H), 1 dup(0EH), 3 dup(00H), 4 dup(0EH), 3 dup(09H), 1 dup(00H), 1 dup(0EH), 78 dup(00H), 1 dup(0EH), 4 dup(00H), 1 dup(0EH), 1 dup(00H), 4 dup(09H), 1 dup(0EH), 44 dup(00H), 1 dup(0EH), 3 dup(00H), 2 dup(0EH), 1 dup(00H), 2 dup(0EH), 5 dup(09H), 1 dup(0EH), 8 dup(09H), 3 dup(0EH), 6 dup(09H), 25 dup(00H)
+            db 10 dup(00H), 1 dup(0EH), 3 dup(00H), 6 dup(0EH), 13 dup(09H), 1 dup(0EH), 1 dup(09H), 6 dup(0EH), 110 dup(00H), 7 dup(0EH), 13 dup(09H), 1 dup(0EH), 4 dup(09H), 2 dup(0EH), 23 dup(00H), 1 dup(0EH), 50 dup(00H), 2 dup(0EH), 7 dup(09H), 3 dup(0EH), 2 dup(09H), 1 dup(0EH), 1 dup(09H), 1 dup(0EH), 6 dup(09H), 1 dup(0EH), 1 dup(09H), 3 dup(0EH), 7 dup(09H), 1 dup(0EH), 1 dup(09H), 72 dup(00H), 2 dup(0EH), 1 dup(00H), 3 dup(0EH), 1 dup(09H), 4 dup(0EH), 1 dup(09H), 1 dup(0EH), 5 dup(09H), 39 dup(00H), 2 dup(0EH), 1 dup(00H), 2 dup(0EH), 1 dup(09H), 3 dup(0EH), 2 dup(09H), 1 dup(0EH), 25 dup(09H), 1 dup(0EH), 24 dup(00H)
+            db 4 dup(00H), 6 dup(0EH), 1 dup(09H), 3 dup(0EH), 27 dup(09H), 2 dup(0EH), 2 dup(00H), 1 dup(0EH), 103 dup(00H), 2 dup(0EH), 27 dup(09H), 1 dup(0EH), 21 dup(00H), 1 dup(0EH), 1 dup(09H), 1 dup(0EH), 38 dup(00H), 3 dup(0EH), 7 dup(00H), 1 dup(0EH), 37 dup(09H), 2 dup(0EH), 65 dup(00H), 5 dup(0EH), 2 dup(09H), 1 dup(0EH), 15 dup(09H), 1 dup(0EH), 12 dup(00H), 1 dup(0EH), 18 dup(00H), 1 dup(0EH), 1 dup(00H), 2 dup(0EH), 1 dup(00H), 2 dup(0EH), 2 dup(09H), 1 dup(0EH), 35 dup(09H), 1 dup(0EH), 23 dup(00H)
+            db 3 dup(00H), 1 dup(0EH), 39 dup(09H), 2 dup(0EH), 1 dup(09H), 3 dup(0EH), 24 dup(00H), 1 dup(0EH), 72 dup(00H), 3 dup(0EH), 30 dup(09H), 6 dup(0EH), 14 dup(00H), 1 dup(0EH), 3 dup(09H), 36 dup(00H), 2 dup(0EH), 3 dup(09H), 1 dup(0EH), 1 dup(00H), 5 dup(0EH), 40 dup(09H), 5 dup(0EH), 1 dup(00H), 1 dup(0EH), 55 dup(00H), 3 dup(0EH), 24 dup(09H), 3 dup(0EH), 8 dup(00H), 1 dup(0EH), 1 dup(09H), 2 dup(0EH), 12 dup(00H), 1 dup(0EH), 1 dup(00H), 2 dup(0EH), 1 dup(09H), 1 dup(0EH), 2 dup(09H), 1 dup(0EH), 41 dup(09H), 1 dup(0EH), 22 dup(00H)
+            db 3 dup(0EH), 46 dup(09H), 1 dup(0EH), 1 dup(00H), 2 dup(0EH), 1 dup(00H), 1 dup(0EH), 17 dup(00H), 1 dup(0EH), 1 dup(09H), 1 dup(0EH), 65 dup(00H), 1 dup(0EH), 2 dup(00H), 3 dup(0EH), 39 dup(09H), 6 dup(0EH), 7 dup(00H), 1 dup(0EH), 4 dup(09H), 2 dup(0EH), 10 dup(00H), 3 dup(0EH), 20 dup(00H), 1 dup(0EH), 6 dup(09H), 1 dup(0EH), 50 dup(09H), 1 dup(0EH), 1 dup(09H), 1 dup(0EH), 1 dup(00H), 1 dup(0EH), 1 dup(00H), 2 dup(0EH), 16 dup(00H), 4 dup(0EH), 21 dup(00H), 2 dup(0EH), 2 dup(00H), 4 dup(0EH), 30 dup(09H), 3 dup(0EH), 1 dup(00H), 4 dup(0EH), 4 dup(09H), 2 dup(0EH), 7 dup(00H), 3 dup(0EH), 1 dup(09H), 1 dup(0EH), 49 dup(09H), 1 dup(0EH), 2 dup(00H), 1 dup(0EH), 2 dup(00H), 1 dup(0EH), 15 dup(00H)
+            db 50 dup(09H), 1 dup(0EH), 2 dup(09H), 1 dup(0EH), 1 dup(09H), 5 dup(0EH), 4 dup(00H), 1 dup(0EH), 6 dup(00H), 1 dup(0EH), 3 dup(09H), 1 dup(0EH), 12 dup(00H), 4 dup(0EH), 1 dup(00H), 6 dup(0EH), 1 dup(00H), 3 dup(0EH), 1 dup(00H), 32 dup(0EH), 1 dup(00H), 3 dup(0EH), 1 dup(09H), 2 dup(0EH), 48 dup(09H), 7 dup(0EH), 7 dup(09H), 1 dup(0EH), 1 dup(00H), 1 dup(0EH), 2 dup(00H), 5 dup(0EH), 3 dup(09H), 3 dup(0EH), 4 dup(00H), 1 dup(0EH), 2 dup(00H), 1 dup(0EH), 4 dup(00H), 5 dup(0EH), 61 dup(09H), 1 dup(0EH), 1 dup(09H), 1 dup(0EH), 2 dup(09H), 6 dup(0EH), 6 dup(00H), 1 dup(0EH), 1 dup(00H), 2 dup(0EH), 4 dup(09H), 2 dup(0EH), 4 dup(00H), 2 dup(0EH), 7 dup(00H), 2 dup(0EH), 1 dup(00H), 3 dup(0EH), 2 dup(09H), 2 dup(0EH), 37 dup(09H), 1 dup(0EH), 10 dup(09H), 1 dup(00H), 1 dup(0EH), 1 dup(00H), 4 dup(0EH), 55 dup(09H), 2 dup(0EH), 1 dup(09H), 2 dup(0EH), 1 dup(09H), 2 dup(0EH), 1 dup(00H), 2 dup(0EH), 10 dup(00H)
+            db 60 dup(09H), 4 dup(0EH), 1 dup(09H), 6 dup(0EH), 5 dup(09H), 12 dup(0EH), 4 dup(09H), 1 dup(0EH), 6 dup(09H), 1 dup(0EH), 3 dup(09H), 1 dup(0EH), 32 dup(09H), 1 dup(0EH), 69 dup(09H), 1 dup(0EH), 1 dup(09H), 2 dup(0EH), 11 dup(09H), 4 dup(0EH), 1 dup(09H), 2 dup(0EH), 1 dup(09H), 4 dup(0EH), 77 dup(09H), 6 dup(0EH), 1 dup(09H), 1 dup(0EH), 8 dup(09H), 4 dup(0EH), 2 dup(09H), 7 dup(0EH), 2 dup(09H), 1 dup(0EH), 55 dup(09H), 1 dup(0EH), 1 dup(09H), 1 dup(0EH), 67 dup(09H), 1 dup(0EH), 2 dup(09H), 10 dup(0EH)
+            db 60 dup(09H), 4 dup(0EH), 1 dup(09H), 6 dup(0EH), 5 dup(09H), 12 dup(0EH), 4 dup(09H), 1 dup(0EH), 6 dup(09H), 1 dup(0EH), 3 dup(09H), 1 dup(0EH), 32 dup(09H), 1 dup(0EH), 69 dup(09H), 1 dup(0EH), 1 dup(09H), 2 dup(0EH), 11 dup(09H), 4 dup(0EH), 1 dup(09H), 2 dup(0EH), 1 dup(09H), 4 dup(0EH), 77 dup(09H), 6 dup(0EH), 1 dup(09H), 1 dup(0EH), 8 dup(09H), 4 dup(0EH), 2 dup(09H), 7 dup(0EH), 2 dup(09H), 1 dup(0EH), 55 dup(09H), 1 dup(0EH), 1 dup(09H), 1 dup(0EH), 67 dup(09H), 1 dup(0EH), 2 dup(09H), 10 dup(0EH)
+            db 38 dup (480 dup(09H))
+
+        
+
+
                  
 .code
 
-DESENHA_CENARIO proc
+TERRENO_DESENHA proc
     push ax
     push cx
     push dx
@@ -28,12 +43,12 @@ DESENHA_CENARIO proc
     mov ax, 0A000H       ; Segmento de mem?ria de v?deo (modo gr?fico 13h)
     mov es, ax                  ; Aponta ES para o segmento de v?deo
 
-    mov si, offset cenario_1      ; Aponta SI para o in?cio do vetor `cenario`
+    mov si, offset terreno_1      ; Aponta SI para o in?cio do vetor `cenario`
     add si, scroll_cenario          ; Aplica o deslocamento para o cen?rio
 
 PRINTA_CENARIO:
-    mov di, 57600               ; 200 - 49(tamanho do terreno) = 160 * 320 = 51200  <- offset da linha 160
-    mov dx, 4                  ; N?mero de linhas a desenhar
+    mov di, 48320               ; 200 - 49(tamanho do terreno) = 151 * 320 = 48320  <- offset da linha 151
+    mov dx, altura_cenario     ; N?mero de linhas a desenhar
 desenha_linha_ter:
     mov cx, 320                 ; N?mero de pixels por linha
     rep movsb                   ; Copia a linha do cen?rio para a tela
@@ -52,7 +67,79 @@ END_PROC:
 ENDP
 
 
-                 
+TERRENO_MOV proc
+    push AX
+    push SI
+
+    xor AX, AX
+    add scroll_cenario, 8          ; Incrementa o deslocamento (move o inicio do desenho pra esquerda ), quanto maior o valor aqui, mais rapido parece que o cenario se movimenta
+
+    cmp scroll_cenario, 480         ; Se desloc_cen >= 480, reseta o cen?rio
+    jl continua_movimento       ; Se desloc_cen < 480, continua o movimento
+
+    mov scroll_cenario, 0           ; Reseta o deslocamento ao ultrapassar o limite
+
+continua_movimento:
+    call TERRENO_DESENHA        ; Chama a fun??o para desenhar o cen?rio atualizado
+    pop si
+    pop ax
+    ret
+ENDP
+
+
+; recebe em CX:DX o tempo de espera
+SLEEP proc 
+    push CX                 ;salva contexto
+    push DX             
+    push AX             
+      
+    ;xor CX, CX              ;zera CX, pois o tempo e definido por CX:DX
+    ;mov DX, frame_time      ;espera 16667 microsegundos, assim ha 60 frames por segundo
+    mov AH, 86h             ;configura o modo de espera
+    int 15h                 ;chama a espera no sistema
+    
+    pop AX
+    pop DX
+    pop CX
+    ret
+endp
+  
+
+
+; PARAMS:
+;   DS:SI -> buffer do terreno (in-place)
+;   BH    -> cor_alvo (a que ser? substitu?da)
+;   BL    -> cor_nova
+; Efeitos: altera apenas bytes == cor_alvo
+TERRENO_TROCA_COR PROC
+    PUSH AX
+    PUSH BX
+    PUSH CX
+    PUSH SI
+
+    MOV CX, 480*50
+
+    CLD                     ; garantir SI++
+
+TERRENO_TROCA_LOOP:
+
+    LODSB                   ; AL = [DS:SI], SI++
+    CMP   AL, BH            ; ? a cor-alvo?
+    JNE   PULA_ESCRITA_COR
+    MOV   [SI-1], BL        ; substitui por cor_nova asdads
+PULA_ESCRITA_COR:
+    LOOP  TERRENO_TROCA_LOOP
+
+    POP SI
+    POP CX 
+    POP BX
+    POP AX
+    RET
+TERRENO_TROCA_COR ENDP
+
+
+
+               
 MAIN:
     ;referencia o segmento de dados em ds
     mov AX, @data
@@ -69,7 +156,34 @@ MAIN:
     mov AL, 13H
     int 10H
     
-    call DESENHA_CENARIO
+    mov CX, 100
+    mov dx, 0411Bh
+    
+MOVIMENTO:
+    
+    mov AX,CX
+    xor CX,CX
+    
+    call TERRENO_MOV
+    call SLEEP
+    mov CX,AX
+    
+    cmp CX,1
+    jne CONTINUA
+    
+    mov SI, offset terreno_1
+    mov BH, 09H
+    mov BL, cor_terreno_2
+    call TERRENO_TROCA_COR
+    
+    mov BH, 0EH
+    mov BL, cor_terreno_2_borda
+    call TERRENO_TROCA_COR
+    
+    mov CX,100
+    
+    CONTINUA:
+    loop MOVIMENTO
     
   
     mov AH, 4Ch
