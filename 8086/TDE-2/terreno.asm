@@ -140,26 +140,29 @@ terreno_predios  db 2 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 
                           db 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
                           db 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H)
                           db 480 dup(00H)
-          
-                 
+
+           
+           
+                          
 .code
 
 TERRENO_DESENHA proc
-    push ax
     push cx
     push dx
     push si
     push di
-
+    push ax
+    
     mov ax, 0A000H       ; Segmento de mem?ria de v?deo (modo gr?fico 13h)
     mov es, ax                  ; Aponta ES para o segmento de v?deo
-
-    mov si, offset terreno_predios      ; Aponta SI para o in?cio do vetor `cenario`
+    
+    pop AX
+    
     add si, scroll_cenario          ; Aplica o deslocamento para o cen?rio
 
 PRINTA_CENARIO:
-    mov di, 38080               ; 200 - 49(tamanho do terreno) = 151 * 320 = 48320  <- offset da linha 151
-    mov dx, altura_terreno_predios     ; N?mero de linhas a desenhar
+    mov di, DX               ;  offset da linha 
+    mov dx, AX                  ; N?mero de linhas a desenhar
 desenha_linha_ter:
     mov cx, 320                 ; N?mero de pixels por linha
     rep movsb                   ; Copia a linha do cen?rio para a tela
@@ -177,13 +180,12 @@ END_PROC:
     ret
 ENDP
 
-
-TERRENO_MOV proc
-    push AX
-    push SI
-
-    xor AX, AX
-    add scroll_cenario, 3          ; Incrementa o deslocamento (move o inicio do desenho pra esquerda ), quanto maior o valor aqui, mais rapido parece que o cenario se movimenta
+;PARAMS
+; AX = ALTURA DO TERRENO
+;SI = OFFSET DO TERRENO
+;DX = LINHA INICIAL DO DESENHO
+TERRENO_MOV proc   
+    add scroll_cenario,3        ; Incrementa o deslocamento (move o inicio do desenho pra esquerda ), quanto maior o valor aqui, mais rapido parece que o cenario se movimenta10
 
     cmp scroll_cenario, 480         ; Se desloc_cen >= 480, reseta o cen?rio
     jl continua_movimento       ; Se desloc_cen < 480, continua o movimento
@@ -191,9 +193,9 @@ TERRENO_MOV proc
     mov scroll_cenario, 0           ; Reseta o deslocamento ao ultrapassar o limite
 
 continua_movimento:
+   
     call TERRENO_DESENHA        ; Chama a fun??o para desenhar o cen?rio atualizado
-    pop si
-    pop ax
+ 
     ret
 ENDP
 
@@ -275,7 +277,18 @@ MOVIMENTO:
     mov AX,CX
     xor CX,CX
     
+    push AX
+    push DX
+    
+    
+    mov SI, offset terreno_1
+    mov AX, altura_terreno_1
+    mov DX,48000
     call TERRENO_MOV
+    
+    pop DX
+    pop AX
+    
     call SLEEP
     mov CX,AX
     
