@@ -3,12 +3,12 @@
 
 .stack 100H
 
-.data
+.data 
     MICRO_TO_SEC EQU 1000000    ; 1 segundo = 1.000.000 microsegundos (1000 * 1000)
     DELAY_FRAME EQU 10000       ; 10.000us = 10ms
     FPS EQU 100
 
-    DURACAO_FASE EQU 3        ; Tempo que ira durar cada fase
+    DURACAO_FASE EQU 1        ; Tempo que ira durar cada fase
     NUMERO_VIDAS EQU 3
     NUMERO_DIGITOS_PONTOS EQU 5
     NUMERO_DIGITOS_TEMPO EQU 2
@@ -748,7 +748,7 @@ JOGAR_SAIR proc                     ; Verifica qual opcao esta marcada
         
         
         inc fase
-        call DIMINUIR_VIDA
+        call DIMINUIR_VIDA 
         call PARTIDA
         call CHECA_VIDAS
         
@@ -770,7 +770,7 @@ JOGAR_SAIR proc                     ; Verifica qual opcao esta marcada
         inc fase
         
        
-        call DIMINUIR_VIDA
+       call DIMINUIR_VIDA
         
         call PARTIDA
         call CHECA_VIDAS
@@ -794,25 +794,27 @@ JOGAR_SAIR proc                     ; Verifica qual opcao esta marcada
         call DIMINUIR_VIDA
         call PARTIDA
         call CHECA_VIDAS
-        cmp fase,5 ;perdeu
+        cmp fase,5 
         je PERDEU
 
-        ;CHEGOU NO FINAL = GANHOU
+        
     
     call LIMPA_TELA    
     call ESCREVE_VENCEDOR
+    inc fase
+    
     xor  AH, AH 
     int  16h 
     call LIMPA_TELA
-    call TERMINA_JOGO
+    jmp SAIR_JOGO
         
-    PERDEU:
-           call LIMPA_TELA
-           call ESCREVE_GAME_OVER
-           xor  AH, AH 
-           int  16h 
-           call LIMPA_TELA
-           call TERMINA_JOGO
+PERDEU:
+     call LIMPA_TELA
+     call ESCREVE_GAME_OVER
+     xor  AH, AH 
+     int  16h 
+     call LIMPA_TELA   
+          
            
     SAIR_JOGO:
     ret
@@ -926,11 +928,24 @@ JOGO proc                       ; Carrega a tela inicial do jogo (menu)
         call INTERAGE_MENU
         call MENU_ANIMATION
         jne CONTINUA_LOOP
-    
+        
     CONTINUA_LOOP:
+        cmp fase,4
+        je RESET_JOGO  
+        cmp fase,5
+        je RESET_JOGO 
         call VERIFICA_OPCAO
         jmp MENU
-
+ 
+    RESET_JOGO:
+    call LIMPA_TELA
+    call RECARREGA_VIDA
+    call ESCREVE_TITULO
+    call ESCREVE_BOTOES  
+    mov fase,0
+    jmp MENU 
+        
+    SAIR_JOGO_LOOP:
     ret
 endp
 
@@ -1346,6 +1361,36 @@ DIMINUIR_FIM:
     ret
 endp
 
+
+
+RECARREGA_VIDA proc
+    push AX
+    push BX
+    push CX
+    
+    xor BX,BX
+    xor AX,AX
+    
+    mov CX,3
+    mov AL,0
+LOOP_RECARGA:
+    cmp AL,3
+    je TERMINOU_RECARGA
+    mov BL,AL 
+    mov vidas_vetor[BX],1
+    inc AL 
+    loop LOOP_RECARGA
+    
+TERMINOU_RECARGA:
+    mov vidas_qtd,3
+   
+    pop CX
+    pop BX
+    pop AX
+    
+    ret
+endp
+
 MOSTRAR_VIDAS proc
     push ax
     push bx
@@ -1591,8 +1636,6 @@ MAIN:
     xor AH, AH
     mov AL, 13H
     int 10H
-    
-    
     
     call JOGO
     
