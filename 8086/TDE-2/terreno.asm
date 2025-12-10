@@ -5,7 +5,7 @@
 
 .data
 
-;VARIAVEIS DO TERRENO
+;VARIAVEIS DO TERRENO==============================
 altura_terreno_1 equ 49
 
 cor_terreno_2 equ 06H
@@ -140,8 +140,7 @@ terreno_predios  db 2 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 
                           db 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
                           db 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H)
                           db 480 dup(00H)
-
-           
+;FIM VARIAVEIS TERRENO==========           
            
                           
 .code
@@ -283,7 +282,7 @@ MOVIMENTO:
     
     mov SI, offset terreno_1
     mov AX, altura_terreno_1
-    mov DX,48000
+    mov DX,48320                  ; 200-49 = 151 * 320 = 48320 <- offset da linha/ 38080
     call TERRENO_MOV
     
     pop DX

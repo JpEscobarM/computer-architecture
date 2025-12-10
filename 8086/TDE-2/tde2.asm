@@ -3,65 +3,43 @@
 
 .stack 100H
 
-
 .data
-op_menu db 1
+    MICRO_TO_SEC EQU 1000000    ; 1 segundo = 1.000.000 microsegundos (1000 * 1000)
+    DELAY_FRAME EQU 10000       ; 10.000us = 10ms
+    FPS EQU 100
 
-seed dw 0 
+    DURACAO_FASE EQU 3        ; Tempo que ira durar cada fase
+    NUMERO_VIDAS EQU 3
+    NUMERO_DIGITOS_PONTOS EQU 5
+    NUMERO_DIGITOS_TEMPO EQU 2
+
+    CR EQU 13                   ; define uma constante de valor 13
+    LF EQU 10                   ; define uma constante de valor 10
+    
+    LARGURA EQU 320             ; Largura da tela
+    ALTURA EQU 200              ; Altura da tela
+
+
+
+seed dw 0
+op_menu db 1
       
-fase db 1 ;indicia fase atual 
+fase db ? ;indicia fase atual 
+
+tabela_pontuacao_tempo dw 10, 15, 25
+tabela_pontuacao_nave dw 100, 150, 250
       
 menu_selecao db 0   ; 0 = Jogar, 1 = Sair
-
-
-
 inicia_jogo  db 0   ; Flag para iniciar o jogo
-fps dw 10000        ; tempo em microsegundos (/10 para frames por segundo)
-tempo_tela_fase dd 1000 * 1000 * 1
+tempo_tela_fase dd MICRO_TO_SEC * 1
 
+temp_numero db ?
 
-;VARIAVEIS
-estado db 0 ;flag de estados de fases, 1= fase 1 = 2 = fase 2, 3 = fase 3 , 4  = final
-pontos dw 0
-qtd_alien dw 0 ;controla quantidade de aliens 
-qtd_meteoro dw 0 ;controla a quantidade de meteoros
-tiro_flag db 0 ;checa existencia do tiro, s? pode atirar quando tiro_flag == 0
-tiro_desloc dw 0 ;variavel para deslocamento da posicao do tiro
+vidas dw NUMERO_VIDAS
+pontuacao dw 0
+tempo_restante dw DURACAO_FASE
 
-
-tempo_fase equ 30 ; variavel que define o tempo de cada fase
-cronometro db 0  ;cronometro que ficar? decrementando baseado no tempo_fase
-cronometro_string db 2 dup(?) ;2 casas decimais
-tamanho_cronometro_string equ $-cronometro_string
-
-posicoes_aliens dw 20 dup(0) ; posicao dos aliens
-
-aliens_restante_fase db ?;? inicializada em MOSTRA_SETOR com naves_set1/2/3 (o limite desejado).
-;Ao gerar uma inimiga (GERAR_INIMIGO) voc? decrementa=  consome 1 ?cr?dito? de spawn.
-;Quando a inimiga morre ou sai da tela (LIMPAR_NAVE_INIMIGA e tamb?m no trecho de ?escapou? em MOVIMENTA_INIMIGOS),
-;voc? incrementa =  devolve o cr?dito.
-
-  vidas db 3 dup(1) ;vida = 1 , sem vida = 0
-  vidas_qtd db 3
-  vida_posicao_x db 132 ;vetor de posicao de cada vida
-                 db 152
-                 db 172
-    
-  
-  pontos_string db 6 dup (?)
-  tamanho_pontos_string equ $-pontos_string
-  
-   frase_score db "SCORE: "
-  score_tamanho equ $-frase_score
-  frase_tempo db "TEMPO: "
-  tempo_tamanho equ $- frase_tempo
-  frase_pontuacao db "PONTUACAO: "
-  pontuacao_tamanho equ $ - frase_pontuacao
-
-;=====  
-  
-largura_video dw 320
-altura_video dw 200
+cont_frames dw 0 ; Frames percorridos dentro de 1s
 
 nave_posicao dw 0
 nave_inimica_posicao dw 0
@@ -72,108 +50,86 @@ alien_y dw 0
 alien_x dw 0
 alien_direction dw 1 ;1 = esquerda, 2 = direita
 
- 
+limite_topo dw 10 * LARGURA
+limite_fundo dw (ALTURA - 13) * LARGURA
+limite_direita dw LARGURA - 29 
 
-; Terreno (amarelo = 0EH, azul claro = 09H, preto = 0H)
-terreno_planeta  db 125 dup(0H) , 7 dup(09H) , 5 dup(0EH) , 343 dup(0H)
-                 db 125 dup(0H) , 7 dup(09H) , 5 dup(0EH) , 343 dup(0H)
-                 db 8 dup(0H) , 5 dup(09H) , 118 dup(0H) , 5 dup(09H) , 344 dup(0H)
-                 db 6 dup(0H) , 2 dup(09H) , 5 dup(0EH) , 09H , 466 dup(0H)
-                 db 4 dup(0H) , 09H , 8 dup(0EH) , 09H , 466 dup(0H)
-                 db 3 dup(0H) , 2 dup(09H) , 8 dup(0EH) , 3 dup(09H) , 464 dup(0H)
-                 db 3 dup(0H) , 13 dup(0EH) , 09H , 463 dup(0H)
-                 db 0H , 2 dup(09H) , 5 dup(0EH) , 2 dup(09H) , 6 dup(0EH) , 09H , 463 dup(0H)
-                 db 0H , 09H , 6 dup(0EH) , 2 dup(09H) , 6 dup(0EH) , 09H , 463 dup(0H)
-                 db 6 dup(0EH) , 2 dup(09H) , 6 dup(0EH) , 09H , 465 dup(0H)
-                 db 5 dup(0EH) , 8 dup(09H) , 2 dup(0EH) , 5 dup(09H) , 460 dup(0H)
-                 db 4 dup(0EH) , 3 dup(09H) , 0EH , 5 dup(09H) , 7 dup(0EH) , 460 dup(0H)
-                 db 3 dup(0EH) , 26 dup(09H) , 451 dup(0H)
-                 db 3 dup(0EH) , 17 dup(09H) , 8 dup(0EH) , 09H , 451 dup(0H)
-                 db 0EH , 18 dup(09H) , 7 dup(0EH) , 09H , 453 dup(0H)
-                 db 0EH , 18 dup(09H) , 7 dup(0EH) , 09H , 453 dup(0H)
-                 db 22 dup(09H) , 4 dup(0EH) , 09H , 453 dup(0H)
-                 db 22 dup(09H) , 5 dup(0EH) , 3 dup(09H) , 450 dup(0H)
-                 db 22 dup(09H) , 8 dup(0EH) , 09H , 449 dup(0H)
-                 db 23 dup(09H) , 8 dup(0EH) , 10 dup(09H) , 439 dup(0H)
-                 db 24 dup(09H) , 16 dup(0EH) , 09H , 439 dup(0H)
-                 db 32 dup(09H) , 6 dup(0EH) , 09H , 441 dup(0H)
-                 db 37 dup(09H) , 2 dup(0EH) , 3 dup(09H) , 438 dup(0H)
-                 db 37 dup(09H) , 5 dup(0EH) , 438 dup(0H)
-                 db 40 dup(09H) , 2 dup(0EH) , 7 dup(09H) , 431 dup(0H)
-                 db 41 dup(09H) , 7 dup(0EH) , 09H , 431 dup(0H)
-                 db 44 dup(09H) , 15 dup(0EH) , 421 dup(0H)
-                 db 45 dup(09H) , 14 dup(0EH) , 5 dup(09H) , 416 dup(0H)
-                 db 46 dup(09H) , 18 dup(0EH) , 416 dup(0H)
-                 db 57 dup(09H) , 7 dup(0EH) , 4 dup(09H) , 412 dup(0H)
-                 db 58 dup(09H) , 9 dup(0EH) , 09H , 412 dup(0H)
-                 db 64 dup(09H) , 7 dup(0EH) , 2 dup(09H) , 407 dup(0H)
-                 db 65 dup(09H) , 7 dup(0EH) , 5 dup(09H) , 403 dup(0H)
-                 db 68 dup(09H) , 9 dup(0EH) , 09H , 402 dup(0H)
-                 db 71 dup(09H) , 7 dup(0EH) , 09H , 401 dup(0H)
-                 db 71 dup(09H) , 8 dup(0EH) , 09H , 400 dup(0H)
-                 db 74 dup(09H) , 8 dup(0EH) , 09H , 8 dup(0H) , 09H , 25 dup(0EH) , 2 dup(09H) , 26 dup(0H) , 2 dup(09H) , 9 dup(0EH) , 2 dup(09H) , 14 dup(0H) , 2 dup(09H) , 7 dup(0EH) , 2 dup(09H) , 6 dup(0H) , 09H , 10 dup(0EH) , 2 dup(09H) , 6 dup(0H) , 09H , 9 dup(0EH) , 09H , 11 dup(0H) , 09H , 10 dup(0EH) , 09H , 20 dup(0H) , 09H , 22 dup(0EH) , 2 dup(09H) , 30 dup(0H) , 09H , 10 dup(0EH) , 09H , 15 dup(0H) , 09H , 8 dup(0EH) , 09H , 7 dup(0H) , 09H , 10 dup(0EH) , 09H , 6 dup(0H) , 2 dup(09H) , 8 dup(0EH) , 09H , 11 dup(0H) , 2 dup(09H) , 10 dup(0EH) , 09H , 11 dup(0H) , 09H , 7 dup(0EH) , 09H , 3 dup(0H) , 09H , 9 dup(0EH) , 09H , 6 dup(0H) , 2 dup(09H) , 4 dup(0EH) , 09H , 15 dup(0H) , 09H , 3 dup(0EH)
-                 db 74 dup(09H) , 8 dup(0EH) , 9 dup(09H) , 27 dup(0EH) , 7 dup(09H) , 20 dup(0H) , 2 dup(09H) , 10 dup(0EH) , 16 dup(09H) , 10 dup(0EH) , 7 dup(09H) , 11 dup(0EH) , 7 dup(09H) , 10 dup(0EH) , 13 dup(09H) , 11 dup(0EH) , 3 dup(09H) , 11 dup(0H) , 7 dup(09H) , 23 dup(0EH) , 09H , 25 dup(0H) , 5 dup(09H) , 11 dup(0EH) , 16 dup(09H) , 10 dup(0EH) , 7 dup(09H) , 12 dup(0EH) , 7 dup(09H) , 10 dup(0EH) , 12 dup(09H) , 11 dup(0EH) , 13 dup(09H) , 8 dup(0EH) , 3 dup(09H) , 10 dup(0EH) , 8 dup(09H) , 6 dup(0EH) , 15 dup(0H) , 09H , 3 dup(0EH)
-                 db 74 dup(09H) , 51 dup(0EH) , 22 dup(0H) , 98 dup(0EH) , 09H , 9 dup(0H) , 09H , 30 dup(0EH) , 09H , 24 dup(0H) , 09H , 149 dup(0EH) , 15 dup(0H) , 09H , 3 dup(0EH)
-                 db 79 dup(09H) , 21 dup(0EH) , 13 dup(09H) , 11 dup(0EH) , 09H , 22 dup(0H) , 11 dup(0EH) , 4 dup(09H) , 8 dup(0EH) , 4 dup(09H) , 14 dup(0EH) , 6 dup(09H) , 15 dup(0EH) , 7 dup(09H) , 15 dup(0EH) , 9 dup(09H) , 5 dup(0EH) , 11 dup(09H) , 12 dup(0EH) , 13 dup(09H) , 5 dup(0EH) , 2 dup(09H) , 20 dup(0H) , 4 dup(09H) , 7 dup(0EH) , 16 dup(09H) , 14 dup(0EH) , 7 dup(09H) , 14 dup(0EH) , 8 dup(09H) , 14 dup(0EH) , 13 dup(09H) , 4 dup(0EH) , 4 dup(09H) , 14 dup(0EH) , 20 dup(09H) , 14 dup(0EH) , 15 dup(09H) , 4 dup(0EH)
-                 db 80 dup(09H) , 19 dup(0EH) , 14 dup(09H) , 10 dup(0EH) , 09H , 23 dup(0H) , 10 dup(0EH) , 6 dup(09H) , 6 dup(0EH) , 6 dup(09H) , 13 dup(0EH) , 7 dup(09H) , 13 dup(0EH) , 9 dup(09H) , 13 dup(0EH) , 11 dup(09H) , 26 dup(0EH) , 14 dup(09H) , 7 dup(0EH) , 20 dup(0H) , 09H , 9 dup(0EH) , 18 dup(09H) , 13 dup(0EH) , 7 dup(09H) , 13 dup(0EH) , 9 dup(09H) , 13 dup(0EH) , 14 dup(09H) , 3 dup(0EH) , 6 dup(09H) , 13 dup(0EH) , 21 dup(09H) , 32 dup(0EH)
-                 db 120 dup(09H) , 4 dup(0EH) , 6 dup(09H) , 15 dup(0H) , 2 dup(09H) , 5 dup(0EH) , 95 dup(09H) , 7 dup(0EH) , 27 dup(09H) , 7 dup(0EH) , 2 dup(09H) , 15 dup(0H) , 3 dup(09H) , 7 dup(0EH) , 165 dup(09H)
-                 db 120 dup(09H) , 10 dup(0EH) , 09H , 14 dup(0H) , 09H , 6 dup(0EH) , 96 dup(09H) , 6 dup(0EH) , 27 dup(09H) , 8 dup(0EH) , 09H , 14 dup(0H) , 09H , 10 dup(0EH) , 165 dup(09H)
-                 db 122 dup(09H) , 9 dup(0EH) , 09H , 8 dup(0H) , 09H , 6 dup(0EH) , 136 dup(09H) , 9 dup(0EH) , 09H , 8 dup(0H) , 09H , 6 dup(0EH) , 172 dup(09H)
-                 db 125 dup(09H) , 7 dup(0EH) , 9 dup(09H) , 6 dup(0EH) , 141 dup(09H) , 5 dup(0EH) , 9 dup(09H) , 5 dup(0EH) , 173 dup(09H)
-                 db 125 dup(09H) , 24 dup(0EH) , 139 dup(09H) , 18 dup(0EH) , 174 dup(09H)
-                 db 128 dup(09H) , 16 dup(0EH) , 151 dup(09H) , 7 dup(0EH) , 178 dup(09H)
-                 db 129 dup(09H) , 14 dup(0EH) , 152 dup(09H) , 6 dup(0EH) , 179 dup(09H)
-                 db 480 dup (09H) 
-  
-arte_titulo db 3 dup(" ")," ___                    _    _     ", 10, 13
-            db 3 dup(" "),"/ __| __ _ _ __ _ _ __ | |__| |___ ", 10, 13
-            db 3 dup(" "),"\__ \/ _| '_/ _` | '  \| '_ \ / -_)", 10, 13
-            db 3 dup(" "),"|___/\__|_| \__,_|_|_|_|_.__/_\___|", 10, 13
+
+vidas_vetor db 3 dup(1) ;vida = 1 , sem vida = 0
+vidas_qtd db 3
+vida_posicao_x db 132 ;vetor de posicao de cada vida
+               db 152
+               db 172
+    
+                                       
+vida db 09H,09H,09H,09H,09H,00H,0CH,0CH,0CH,00H,0EH,0EH,0EH,00H,00H,00H
+     db 00H,09H,09H,09H,0CH,0CH,0CH,0CH,0CH,00H,0EH,00H,00H,0EH,0EH,00H
+     db 00H,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,00H,0EH,00H,0EH,0EH,00H,0EH
+     db 0EH,0EH,0EH,0EH,0CH,0CH,0CH,0CH,0CH,0CH,00H,00H,00H,00H,00H,00H
+     db 00H,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH
+     db 00H,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,00H,00H
+     db 09H,09H,09H,09H,09H,00H,0CH,0CH,0CH,0CH,0CH,0CH,00H,00H,00H,00H
+
+vida_tamanho equ $-vida
+               
+               
+arte_titulo db 3 dup(" ")," ___                    _    _     ", LF, CR
+            db 3 dup(" "),"/ __| __ _ _ __ _ _ __ | |__| |___ ", LF, CR
+            db 3 dup(" "),"\__ \/ _| '_/ _` | '  \| '_ \ / -_)", LF, CR
+            db 3 dup(" "),"|___/\__|_| \__,_|_|_|_|_.__/_\___|", LF, CR
        
 tamanho_arte equ $ - arte_titulo
 
-arte_f1 db 10 dup(" ")," ___               _ ", 10, 13
-        db 10 dup(" "),"| __|_ _ ___ ___  / |", 10, 13
-        db 10 dup(" "),"| _/ _` (_-</ -_) | |", 10, 13
-        db 10 dup(" "),"|_|\__,_/__/\___| |_|", 10, 13
+arte_f1 db 10 dup(" ")," ___               _ ", LF, CR
+        db 10 dup(" "),"| __|_ _ ___ ___  / |", LF, CR
+        db 10 dup(" "),"| _/ _` (_-</ -_) | |", LF, CR
+        db 10 dup(" "),"|_|\__,_/__/\___| |_|", LF, CR
             
 tamanho_f1 equ $ - arte_f1
 
-arte_f2 db 10 dup(" ")," ___               ___ ", 10, 13
-        db 10 dup(" "),"| __|_ _ ___ ___  |_  )", 10, 13
-        db 10 dup(" "),"| _/ _` (_-</ -_)  / / ", 10, 13
-        db 10 dup(" "),"|_|\__,_/__/\___| /___|", 10, 13
+arte_f2 db 10 dup(" ")," ___               ___ ", LF, CR
+        db 10 dup(" "),"| __|_ _ ___ ___  |_  )", LF, CR
+        db 10 dup(" "),"| _/ _` (_-</ -_)  / / ", LF, CR
+        db 10 dup(" "),"|_|\__,_/__/\___| /___|", LF, CR
             
 tamanho_f2 equ $ - arte_f2
 
-arte_f3 db 10 dup(" ")," ___               ____ ", 10, 13
-        db 10 dup(" "),"| __|_ _ ___ ___  |__ / ", 10, 13
-        db 10 dup(" "),"| _/ _` (_-</ -_)  |_ \ ", 10, 13
-        db 10 dup(" "),"|_|\__,_/__/\___| |___/ ", 10, 13
+arte_f3 db 10 dup(" ")," ___               ____ ", LF, CR
+        db 10 dup(" "),"| __|_ _ ___ ___  |__ / ", LF, CR
+        db 10 dup(" "),"| _/ _` (_-</ -_)  |_ \ ", LF, CR
+        db 10 dup(" "),"|_|\__,_/__/\___| |___/ ", LF, CR
 tamanho_f3 equ $ - arte_f3
             
-;  _____  _____  __  __  _____    _____  __ __  _____  _____ 
-; /   __\/  _  \/  \/  \/   __\  /  _  \/  |  \/   __\/  _  \
-; |  |_ ||  _  ||  \/  ||   __|  |  |  |\  |  /|   __||  _  <
-; \_____/\__|__/\__ \__/\_____/  \_____/ \___/ \_____/\__|\_/
-;  __ __  _____  _____  _____  _____  _____  _____  _____    
-; /  |  \/   __\/  _  \/     \/   __\|  _  \/  _  \/  _  \   
-; \  |  /|   __||  |  ||  |--||   __||  |  ||  |  ||  _  <   
-;  \___/ \_____/\__|__/\_____/\_____/|_____/\_____/\__|\_/   
+
+arte_game_over db 10 dup(" "),"   ___                ",LF,CR
+               db 10 dup(" "),"  / __|__ _ _ __  ___ ",LF,CR
+               db 10 dup(" ")," | (_ / _` | '  \/ -_)",LF,CR
+               db 10 dup(" "),"  \___\__,_|_|_|_\___|",LF,CR
+               db 10 dup(" "),"  / _ \__ _____ _ _   ",LF,CR
+               db 10 dup(" ")," | (_) \ V / -_) '_|  ",LF,CR
+               db 10 dup(" "),"  \___/ \_/\___|_|    ",LF,CR
+               
+tamanho_arte_game_over equ $-arte_game_over
+
+arte_vencedor db 3 dup(" "),"__   __                  _         ",LF,CR
+              db 3 dup(" "),"\ \ / /__ _ _  __ ___ __| |___ _ _ ",LF,CR
+              db 3 dup(" ")," \ V / -_) ' \/ _/ -_) _` / _ \ '_|",LF,CR
+              db 3 dup(" "),"  \_/\___|_||_\__\___\__,_\___/_|  ",LF,CR
+              
+tamanho_arte_vencedor equ $-arte_vencedor
 
 
-
-btn_jogar db 15 dup(" "),218,196,196,196,196,196,196,196,191,10,13
-          db 15 dup(" "),179,           " JOGAR ",       179,10,13
-          db 15 dup(" "),192,196,196,196,196,196,196,196,217,10,13
+btn_jogar db 15 dup(" "),218,196,196,196,196,196,196,196,191,LF,CR
+          db 15 dup(" "),179,           " JOGAR ",       179,LF,CR
+          db 15 dup(" "),192,196,196,196,196,196,196,196,217,LF,CR
           
 tamanho_jogar equ $-btn_jogar ;$-> como se fosse um contador de posicao, ao montar uma string
                               ;$ aponta para o final dela.
                               
 
-btn_sair  db 15 dup(" "),218,196,196,196,196,196,196,196,191,10,13
-          db 15 dup(" "),179,           " SAIR  ",        179,10,13
-          db 15 dup(" "),192,196,196,196,196,196,196,196,217,10,13
+btn_sair  db 15 dup(" "),218,196,196,196,196,196,196,196,191,LF,CR
+          db 15 dup(" "),179,           " SAIR  ",        179,LF,CR
+          db 15 dup(" "),192,196,196,196,196,196,196,196,217,LF,CR
 
 
 tamanho_sair equ $-btn_sair
@@ -197,19 +153,7 @@ nave db 09H,09H,09H,09H,09H,09H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,
 
 nave_tamanho equ $-nave
 
-                                       
-vida db 09H,09H,09H,09H,09H,00H,0CH,0CH,0CH,00H,0EH,0EH,0EH,00H,00H,00H
-     db 00H,09H,09H,09H,0CH,0CH,0CH,0CH,0CH,00H,0EH,00H,00H,0EH,0EH,00H
-     db 00H,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,00H,0EH,00H,0EH,0EH,00H,0EH
-     db 0EH,0EH,0EH,0EH,0CH,0CH,0CH,0CH,0CH,0CH,00H,00H,00H,00H,00H,00H
-     db 00H,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH
-     db 00H,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,0CH,00H,00H
-     db 09H,09H,09H,09H,09H,00H,0CH,0CH,0CH,0CH,0CH,0CH,00H,00H,00H,00H
 
-vida_tamanho equ $-vida
-     
-    
-    
 ; ========= METEORO 13x29 (valores em 00H..0FH) =========
 ; 13 linhas x 29 colunas
 meteoro db 00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,05H,05H,05H,05H,05H,08H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H,00H
@@ -244,8 +188,154 @@ alien  db 00h,00h,00h,00h,00h,00h,00h,02h,02h,02h,02h,02h,02h,02h,0Ah,0Eh,0Eh,0E
        db 00h,00h,00h,00h,00h,00h,00h,00h,00h,00h,02h,02h,02h,0Ah,0Ah,0Eh,0Eh,0Eh,0Eh,00h,00h,00h,00h,00h,00h,00h,00h,00h,00H
 alien_tamanho equ $ - alien
 
+pontuacao_frase db "PONTUACAO:"
+tamanho_pontuacao_frase equ $-pontuacao_frase
+
+status db "SCORE:", 22 + (NUMERO_DIGITOS_PONTOS+1) - (NUMERO_DIGITOS_TEMPO+1) dup(" "), "TEMPO:", LF, CR
+tamanho_status equ $ - status
+
+;VARIAVEIS DO TERRENO==============================
+
+
+scroll_cenario dw 0
+
+terreno_1   db 452 dup(00H), 1 dup(0EH), 27 dup(00H)
+            db 376 dup(00H), 1 dup(0EH), 66 dup(00H), 1 dup(0EH), 8 dup(00H), 1 dup(09H), 27 dup(00H)
+            db 160 dup(00H), 4 dup(0EH), 91 dup(00H), 3 dup(0EH), 117 dup(00H), 1 dup(0EH), 1 dup(09H), 56 dup(00H), 3 dup(0EH), 5 dup(00H), 2 dup(0EH), 1 dup(09H), 1 dup(0EH), 6 dup(00H), 1 dup(0EH), 1 dup(09H), 1 dup(0EH), 26 dup(00H)
+            db 27 dup(00H), 2 dup(0EH), 130 dup(00H), 1 dup(0EH), 4 dup(09H), 3 dup(0EH), 87 dup(00H), 1 dup(0EH), 3 dup(09H), 2 dup(0EH), 24 dup(00H), 3 dup(0EH), 87 dup(00H), 1 dup(0EH), 2 dup(09H), 1 dup(0EH), 54 dup(00H), 1 dup(0EH), 3 dup(09H), 1 dup(0EH), 1 dup(00H), 3 dup(0EH), 4 dup(09H), 1 dup(0EH), 3 dup(00H), 2 dup(0EH), 3 dup(09H), 1 dup(0EH), 25 dup(00H)
+            db 20 dup(00H), 7 dup(0EH), 2 dup(09H), 4 dup(0EH), 1 dup(00H), 1 dup(0EH), 123 dup(00H), 1 dup(0EH), 8 dup(09H), 4 dup(0EH), 1 dup(00H), 4 dup(0EH), 78 dup(00H), 6 dup(09H), 1 dup(0EH), 3 dup(00H), 2 dup(0EH), 1 dup(00H), 1 dup(0EH), 1 dup(00H), 6 dup(0EH), 1 dup(00H), 1 dup(0EH), 3 dup(00H), 4 dup(0EH), 3 dup(09H), 1 dup(00H), 1 dup(0EH), 78 dup(00H), 1 dup(0EH), 4 dup(00H), 1 dup(0EH), 1 dup(00H), 4 dup(09H), 1 dup(0EH), 44 dup(00H), 1 dup(0EH), 3 dup(00H), 2 dup(0EH), 1 dup(00H), 2 dup(0EH), 5 dup(09H), 1 dup(0EH), 8 dup(09H), 3 dup(0EH), 6 dup(09H), 25 dup(00H)
+            db 10 dup(00H), 1 dup(0EH), 3 dup(00H), 6 dup(0EH), 13 dup(09H), 1 dup(0EH), 1 dup(09H), 6 dup(0EH), 110 dup(00H), 7 dup(0EH), 13 dup(09H), 1 dup(0EH), 4 dup(09H), 2 dup(0EH), 23 dup(00H), 1 dup(0EH), 50 dup(00H), 2 dup(0EH), 7 dup(09H), 3 dup(0EH), 2 dup(09H), 1 dup(0EH), 1 dup(09H), 1 dup(0EH), 6 dup(09H), 1 dup(0EH), 1 dup(09H), 3 dup(0EH), 7 dup(09H), 1 dup(0EH), 1 dup(09H), 72 dup(00H), 2 dup(0EH), 1 dup(00H), 3 dup(0EH), 1 dup(09H), 4 dup(0EH), 1 dup(09H), 1 dup(0EH), 5 dup(09H), 39 dup(00H), 2 dup(0EH), 1 dup(00H), 2 dup(0EH), 1 dup(09H), 3 dup(0EH), 2 dup(09H), 1 dup(0EH), 25 dup(09H), 1 dup(0EH), 24 dup(00H)
+            db 4 dup(00H), 6 dup(0EH), 1 dup(09H), 3 dup(0EH), 27 dup(09H), 2 dup(0EH), 2 dup(00H), 1 dup(0EH), 103 dup(00H), 2 dup(0EH), 27 dup(09H), 1 dup(0EH), 21 dup(00H), 1 dup(0EH), 1 dup(09H), 1 dup(0EH), 38 dup(00H), 3 dup(0EH), 7 dup(00H), 1 dup(0EH), 37 dup(09H), 2 dup(0EH), 65 dup(00H), 5 dup(0EH), 2 dup(09H), 1 dup(0EH), 15 dup(09H), 1 dup(0EH), 12 dup(00H), 1 dup(0EH), 18 dup(00H), 1 dup(0EH), 1 dup(00H), 2 dup(0EH), 1 dup(00H), 2 dup(0EH), 2 dup(09H), 1 dup(0EH), 35 dup(09H), 1 dup(0EH), 23 dup(00H)
+            db 3 dup(00H), 1 dup(0EH), 39 dup(09H), 2 dup(0EH), 1 dup(09H), 3 dup(0EH), 24 dup(00H), 1 dup(0EH), 72 dup(00H), 3 dup(0EH), 30 dup(09H), 6 dup(0EH), 14 dup(00H), 1 dup(0EH), 3 dup(09H), 36 dup(00H), 2 dup(0EH), 3 dup(09H), 1 dup(0EH), 1 dup(00H), 5 dup(0EH), 40 dup(09H), 5 dup(0EH), 1 dup(00H), 1 dup(0EH), 55 dup(00H), 3 dup(0EH), 24 dup(09H), 3 dup(0EH), 8 dup(00H), 1 dup(0EH), 1 dup(09H), 2 dup(0EH), 12 dup(00H), 1 dup(0EH), 1 dup(00H), 2 dup(0EH), 1 dup(09H), 1 dup(0EH), 2 dup(09H), 1 dup(0EH), 41 dup(09H), 1 dup(0EH), 22 dup(00H)
+            db 3 dup(0EH), 46 dup(09H), 1 dup(0EH), 1 dup(00H), 2 dup(0EH), 1 dup(00H), 1 dup(0EH), 17 dup(00H), 1 dup(0EH), 1 dup(09H), 1 dup(0EH), 65 dup(00H), 1 dup(0EH), 2 dup(00H), 3 dup(0EH), 39 dup(09H), 6 dup(0EH), 7 dup(00H), 1 dup(0EH), 4 dup(09H), 2 dup(0EH), 10 dup(00H), 3 dup(0EH), 20 dup(00H), 1 dup(0EH), 6 dup(09H), 1 dup(0EH), 50 dup(09H), 1 dup(0EH), 1 dup(09H), 1 dup(0EH), 1 dup(00H), 1 dup(0EH), 1 dup(00H), 2 dup(0EH), 16 dup(00H), 4 dup(0EH), 21 dup(00H), 2 dup(0EH), 2 dup(00H), 4 dup(0EH), 30 dup(09H), 3 dup(0EH), 1 dup(00H), 4 dup(0EH), 4 dup(09H), 2 dup(0EH), 7 dup(00H), 3 dup(0EH), 1 dup(09H), 1 dup(0EH), 49 dup(09H), 1 dup(0EH), 2 dup(00H), 1 dup(0EH), 2 dup(00H), 1 dup(0EH), 15 dup(00H)
+            db 50 dup(09H), 1 dup(0EH), 2 dup(09H), 1 dup(0EH), 1 dup(09H), 5 dup(0EH), 4 dup(00H), 1 dup(0EH), 6 dup(00H), 1 dup(0EH), 3 dup(09H), 1 dup(0EH), 12 dup(00H), 4 dup(0EH), 1 dup(00H), 6 dup(0EH), 1 dup(00H), 3 dup(0EH), 1 dup(00H), 32 dup(0EH), 1 dup(00H), 3 dup(0EH), 1 dup(09H), 2 dup(0EH), 48 dup(09H), 7 dup(0EH), 7 dup(09H), 1 dup(0EH), 1 dup(00H), 1 dup(0EH), 2 dup(00H), 5 dup(0EH), 3 dup(09H), 3 dup(0EH), 4 dup(00H), 1 dup(0EH), 2 dup(00H), 1 dup(0EH), 4 dup(00H), 5 dup(0EH), 61 dup(09H), 1 dup(0EH), 1 dup(09H), 1 dup(0EH), 2 dup(09H), 6 dup(0EH), 6 dup(00H), 1 dup(0EH), 1 dup(00H), 2 dup(0EH), 4 dup(09H), 2 dup(0EH), 4 dup(00H), 2 dup(0EH), 7 dup(00H), 2 dup(0EH), 1 dup(00H), 3 dup(0EH), 2 dup(09H), 2 dup(0EH), 37 dup(09H), 1 dup(0EH), 10 dup(09H), 1 dup(00H), 1 dup(0EH), 1 dup(00H), 4 dup(0EH), 55 dup(09H), 2 dup(0EH), 1 dup(09H), 2 dup(0EH), 1 dup(09H), 2 dup(0EH), 1 dup(00H), 2 dup(0EH), 10 dup(00H)
+            db 60 dup(09H), 4 dup(0EH), 1 dup(09H), 6 dup(0EH), 5 dup(09H), 12 dup(0EH), 4 dup(09H), 1 dup(0EH), 6 dup(09H), 1 dup(0EH), 3 dup(09H), 1 dup(0EH), 32 dup(09H), 1 dup(0EH), 69 dup(09H), 1 dup(0EH), 1 dup(09H), 2 dup(0EH), 11 dup(09H), 4 dup(0EH), 1 dup(09H), 2 dup(0EH), 1 dup(09H), 4 dup(0EH), 77 dup(09H), 6 dup(0EH), 1 dup(09H), 1 dup(0EH), 8 dup(09H), 4 dup(0EH), 2 dup(09H), 7 dup(0EH), 2 dup(09H), 1 dup(0EH), 55 dup(09H), 1 dup(0EH), 1 dup(09H), 1 dup(0EH), 67 dup(09H), 1 dup(0EH), 2 dup(09H), 10 dup(0EH)
+            db 60 dup(09H), 4 dup(0EH), 1 dup(09H), 6 dup(0EH), 5 dup(09H), 12 dup(0EH), 4 dup(09H), 1 dup(0EH), 6 dup(09H), 1 dup(0EH), 3 dup(09H), 1 dup(0EH), 32 dup(09H), 1 dup(0EH), 69 dup(09H), 1 dup(0EH), 1 dup(09H), 2 dup(0EH), 11 dup(09H), 4 dup(0EH), 1 dup(09H), 2 dup(0EH), 1 dup(09H), 4 dup(0EH), 77 dup(09H), 6 dup(0EH), 1 dup(09H), 1 dup(0EH), 8 dup(09H), 4 dup(0EH), 2 dup(09H), 7 dup(0EH), 2 dup(09H), 1 dup(0EH), 55 dup(09H), 1 dup(0EH), 1 dup(09H), 1 dup(0EH), 67 dup(09H), 1 dup(0EH), 2 dup(09H), 10 dup(0EH)
+            db 38 dup (480 dup(09H))
+
         
-        
+
+terreno_predios  db 2 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H), 240 dup(00H), 2 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H)
+                          db 2 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H), 240 dup(00H), 2 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H)
+                          db 2 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H), 240 dup(00H), 2 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H)
+                          db 2 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H), 240 dup(00H), 2 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H)
+                          db 96 dup(07H), 240 dup(00H), 144 dup(07H)
+                          db 96 dup(07H), 240 dup(00H), 144 dup(07H)
+                          db 4 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 4 dup(04H), 240 dup(00H), 4 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 4 dup(04H)
+                          db 4 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 4 dup(04H), 240 dup(00H), 4 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 4 dup(04H)
+                          db 4 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 4 dup(04H), 240 dup(00H), 4 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 4 dup(04H)
+                          db 4 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 4 dup(04H), 240 dup(00H), 4 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 4 dup(04H)
+                          db 96 dup(07H), 240 dup(00H), 144 dup(07H)
+                          db 96 dup(07H), 240 dup(00H), 144 dup(07H)
+                          db 2 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H), 240 dup(00H), 2 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H)
+                          db 2 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H), 240 dup(00H), 2 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H)
+                          db 2 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H), 240 dup(00H), 2 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H)
+                          db 2 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H), 240 dup(00H), 2 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H)
+                          db 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 168 dup(00H), 2 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H)
+                          db 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 168 dup(00H), 2 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 168 dup(00H), 2 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 168 dup(00H), 2 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 168 dup(00H), 72 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 168 dup(00H), 72 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 168 dup(00H), 4 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 168 dup(00H), 4 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 168 dup(00H), 4 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 168 dup(00H), 4 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 168 dup(00H), 72 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 168 dup(00H), 72 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 168 dup(00H), 2 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 168 dup(00H), 2 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 168 dup(00H), 2 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 168 dup(00H), 2 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H)
+                          db 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 14 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H),4 dup(07H), 8 dup(04H), 2 dup(07H), 98 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H)
+                          db 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H)
+                          db 98 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H)
+                          db 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H), 98 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H)
+                          db 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H), 108 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 74 dup(07H), 108 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 74 dup(07H), 96 dup(00H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H)
+                          db 8 dup(04H), 4 dup(07H), 4 dup(04H), 96 dup(00H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH)
+                          db 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 4 dup(04H), 96 dup(00H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 4 dup(04H), 96 dup(00H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H)
+                          db 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 4 dup(04H), 96 dup(00H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H)
+                          db 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 74 dup(07H), 96 dup(00H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 74 dup(07H), 108 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H), 108 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H), 98 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH)
+                          db 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H), 98 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H)
+                          db 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 14 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H), 98 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H)
+                          db 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 14 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H)
+                          db 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 98 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 98 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H)
+                          db 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 98 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H)
+                          db 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 98 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 14 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 4 dup(07H), 8 dup(04H), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H)
+                          db 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H)
+                          db 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H)
+                          db 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H)
+                          db 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H)
+                          db 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H)
+                          db 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H)
+                          db 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H)
+                          db 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H)
+                          db 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H)
+                          db 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 4 dup(04H), 4 dup(00H), 4 dup(04H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 12 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H)
+                          db 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H)
+                          db 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 2 dup(07H), 8 dup(0BH), 2 dup(07H)
+                          db 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H), 2 dup(00H), 8 dup(04H), 2 dup(00H), 12 dup(07H)
+                          db 480 dup(00H)
+
+                          
+altura_terrenos dw 49,49,81
+terrenos_ptrs  dw  offset terreno_1, OFFSET terreno_1, OFFSET terreno_predios
+linhas_ptrs    dw  48320, 48320, 38080
+
+;FIM VARIAVEIS TERRENO===========   
+
+
+
 .code
 ; Funcao generica que escreve Strings com cor na tela
 ESCREVE_STRING proc 
@@ -273,6 +363,104 @@ ESCREVE_STRING proc
     pop BX
     pop AX
            
+    ret
+endp
+
+ESCREVE_NUMERO proc
+    ; Salva o contexto
+    push AX
+    push BX
+    push CX
+    push DX
+    push SI
+    push BP
+    push DI
+
+    mov DI, DX
+    mov SI, CX      ; Numero de caracteres
+    
+    mov BX, 10      ; Divisor
+    xor CX, CX
+
+    DIVIDE_LOOP:
+        xor DX, DX
+        div BX              ; AX / 10 -> Resto em DX
+        
+        push DX             ; Salva o digito na pilha
+        inc CX              ; Conta +1 digito real
+        
+        cmp AX, 0
+        jne DIVIDE_LOOP
+    
+    PREENCHE_ZEROS:
+        cmp SI, CX          ; Se Largura Desejada <= Digitos Reais
+        jle LOOP_IMPRIME    ; Entao nao precisa mais de zeros
+        
+        ; Imprime um '0'
+        push CX
+        
+        mov [temp_numero], '0' ; Carrega o caractere '0'
+        
+        ; Configura ESCREVE_STRING
+        mov BP, offset temp_numero ; Texto
+        mov CX, 1                  ; 1 Caractere
+        mov DX, DI                 ; Posicao Atual
+        call ESCREVE_STRING
+        
+        pop CX
+        inc DL              ; Avanca o cursor (Coluna)
+        mov DI, DX          ; Atualiza a posicao salva em DI
+        dec SI              ; Decrementa a largura pendente
+        jmp PREENCHE_ZEROS
+        
+    LOOP_IMPRIME:
+        pop AX              ; Recupera o digito (estava em DX no push)
+        push CX             ; Salva o contador do loop
+        
+        add AL, '0'         ; Converte para ASCII
+        mov [temp_numero], AL
+        
+        mov BP, offset temp_numero
+        mov CX, 1           ; Tamanho 1
+        mov DX, DI          ; Posicao Atual
+        ; BL Cor mantida
+        call ESCREVE_STRING
+        
+        pop CX              ; Restaura contador
+        
+        inc DL              ; Avanca cursor
+        mov DI, DX          ; Atualiza posi??o salva
+        
+        loop LOOP_IMPRIME   ; Decrementa CX e repete se > 0
+
+    ; Restaura contexto
+    pop DI
+    pop BP
+    pop SI
+    pop DX
+    pop CX
+    pop BX
+    pop AX
+    ret
+ESCREVE_NUMERO endp
+
+ESCREVE_VALORES_HUD proc
+    ; Pontuacao atual
+    mov AX, [pontuacao]
+    mov DH, 0
+    mov DL, 7
+    mov BL, 0AH
+    mov CX, NUMERO_DIGITOS_PONTOS
+    call ESCREVE_NUMERO
+
+    ; Tempo restante
+    mov AX, [tempo_restante]
+    mov DH, 0
+    mov DL, 38
+    mov BL, 0AH
+    mov CX, NUMERO_DIGITOS_TEMPO
+    call ESCREVE_NUMERO
+    
     ret
 endp
 
@@ -326,21 +514,45 @@ VERIFICA_TECLADO_JOGO proc
     jmp FIM_TECLADO_JOGO
     
     SETA_CIMA:
+        cmp DI, [limite_topo]
+        jbe FIM_TECLADO_JOGO ; Se DI <= 3200, n?o sobe mais
+
         mov AX, 0 ; 0 = Cima
         call MOVER_VERTICAL
         jmp FIM_TECLADO_JOGO
         
     SETA_BAIXO:
+        cmp DI, [limite_fundo]
+        jae FIM_TECLADO_JOGO ; Se DI >= 59840, n?o desce mais
+
         mov AX, 1 ; 1 = Baixo
         call MOVER_VERTICAL
         jmp FIM_TECLADO_JOGO
 
     SETA_ESQUERDA:
+        ; Calcula a coluna atual (DI % 320)
+        mov AX, DI
+        xor DX, DX
+        mov BX, LARGURA
+        div BX
+        
+        cmp DX, 0  ; Verifica se X <= 0
+        jle FIM_TECLADO_JOGO ; Se sim, n?o vai para a esquerda
+
         mov AX, 0 ; 0 = Esquerda
         call MOVER_HORIZONTAL
         jmp FIM_TECLADO_JOGO
 
     SETA_DIREITA:
+        ; Calcula a coluna atual (DI % 320)
+        mov AX, DI
+        xor DX, DX
+        mov BX, LARGURA
+        div BX
+        
+        cmp DX, [limite_direita] ; Verifica se X >= 291
+        jae FIM_TECLADO_JOGO ; Se sim, n?o vai para a direita
+
         mov AX, 1 ; 1 = Direita
         call MOVER_HORIZONTAL
         jmp FIM_TECLADO_JOGO
@@ -355,16 +567,16 @@ VERIFICA_TECLADO_JOGO proc
 MOVER_VERTICAL proc
     ; AX=0 (Cima), AX=1 (Baixo)
     push BX
-    mov BX, [largura_video]
+    mov BX, LARGURA
     
     cmp AX, 0
     je MOVER_CIMA
     MOVER_BAIXO:
-        add DI, BX
+    add DI, 320*2
         jmp SAIR_MOVIMENTO_VERTICAL
     
     MOVER_CIMA:
-        sub DI, BX
+        sub DI, 320*2
         jmp SAIR_MOVIMENTO_VERTICAL
     
     SAIR_MOVIMENTO_VERTICAL:
@@ -378,11 +590,11 @@ MOVER_HORIZONTAL proc
     je MOVER_ESQUERDA
     
     MOVER_DIREITA:
-        inc DI
+        add DI,2
         jmp SAIR_MOVIMENTO_HORIZONTAL
     
     MOVER_ESQUERDA:
-        dec DI
+        sub DI,2
         jmp SAIR_MOVIMENTO_HORIZONTAL
     
     SAIR_MOVIMENTO_HORIZONTAL:
@@ -399,10 +611,82 @@ CARREGA_FASE proc       ; Espera X segundos e depois limpa a tela
     ret
 endp
 
-PARTIDA proc 
+PARTIDA proc
+    mov [tempo_restante], DURACAO_FASE
+    mov [cont_frames], 0  ; Zera o contador de frames
+    
+    xor BX, BX
+    mov BL, [fase]
+    cmp BX,2
+    jne NAO_TROCA_COR
+    
+    dec BL
+    shl BX, 1
+    cmp BX,2
+    jne NAO_TROCA_COR
+  
+    mov SI,terrenos_ptrs[BX];indice indo de 0...2
+    
+    mov BH, 09H ;cor alvo
+    mov BL, 06H ;cor nova
+    call TERRENO_TROCA_COR
+    
+    mov BH, 0EH ;cor alvo
+    mov BL, 0CH ;cor nova
+    call TERRENO_TROCA_COR
+    
+NAO_TROCA_COR:    
+    ; HUD do Score / Tempo
+    mov DH, 0
+    mov DL, 0
+    mov BL, 0FH
+    mov BP, offset status
+    mov CX, tamanho_status
+    call ESCREVE_STRING
 
-    call MOSTRAR_HEADER 
+    call ESCREVE_VALORES_HUD 
+    call MOSTRAR_VIDAS
+    
+    
+    
+    mov AX, [nave_posicao]
+    mov SI, offset nave
+    call DESENHA
+
+
     JOGANDO:
+       
+        call CHECA_VIDAS;compara vidas_qtd se for 0 entao fase = 5;
+        cmp fase,5
+        je SAIR_DA_FASE
+        
+        inc [cont_frames]
+        cmp [cont_frames], FPS
+        jne ATUALIZA_MOVIMENTO                  ; Se nao passou 1s, pula para movimento
+        
+        mov [cont_frames], 0   ; Reseta contador
+
+        push AX
+        push BX
+
+        xor BX, BX
+        mov BL, [fase]
+        dec BL
+        shl BX, 1
+
+        mov AX, tabela_pontuacao_tempo[BX]
+        add [pontuacao], AX     ; Adiciona os pontos por tempo de sobreviencia
+        
+        pop AX
+        pop BX
+
+        dec [tempo_restante]
+        cmp [tempo_restante], 0
+        je SAIR_DA_FASE
+
+        call ESCREVE_VALORES_HUD
+
+    ATUALIZA_MOVIMENTO:
         call BUSCA_INTERACAO
         
         mov DI, [nave_posicao]
@@ -412,16 +696,40 @@ PARTIDA proc
         
         mov AX, [nave_posicao]
         mov SI, offset nave ;prepara SI para MOVSB Move de DS:SI -> ES:DI
-        call DESENHA; RENDER_SPRITE
+        call DESENHA
         
+        mov BL, [fase] ; fases numeradas a partir de 1
+        dec BL ; vira ?ndice 0..N-1
 
+        xor BH,BH
+        shl bx, 1
+        mov si, terrenos_ptrs[BX] ; SI = OFFSET terreno
+        mov ax, altura_terrenos[BX] ; AX = altura do terreno
+        mov dx, linhas_ptrs[BX] ; DX = linha inicial
+        call TERRENO_MOV
+        
         jmp JOGANDO
 
+    SAIR_DA_FASE:
+        ret
+endp
+
+CHECA_VIDAS proc
+    
+    cmp vidas_qtd,0
+    jne VIDAS_OK
+    
+    mov fase,5
+
+VIDAS_OK:
     ret
 endp
 
 JOGAR_SAIR proc                     ; Verifica qual opcao esta marcada
+    mov [fase], 0
     cmp menu_selecao, 1
+
+    
     jne JOGAR_F1
     call TERMINA_JOGO
     
@@ -433,10 +741,20 @@ JOGAR_SAIR proc                     ; Verifica qual opcao esta marcada
         mov BL, 0FH
         mov BP, offset arte_f1
         mov CX, tamanho_f1
-        call ESCREVE_STRING
         
+        call ESCREVE_STRING
         call CARREGA_FASE
-        ; call PARTIDA
+        
+        
+        
+        inc fase
+        call DIMINUIR_VIDA
+        call PARTIDA
+        call CHECA_VIDAS
+        
+        cmp fase,5;perdeu
+        je PERDEU
+        
         
     JOGAR_F2:
         call LIMPA_TELA
@@ -448,7 +766,17 @@ JOGAR_SAIR proc                     ; Verifica qual opcao esta marcada
         call ESCREVE_STRING
         
         call CARREGA_FASE
-        ; call PARTIDA
+        
+        inc fase
+        
+       
+        call DIMINUIR_VIDA
+        
+        call PARTIDA
+        call CHECA_VIDAS
+        cmp fase,5 ;perdeu
+        je PERDEU
+        
         
     JOGAR_F3:
         call LIMPA_TELA
@@ -460,9 +788,33 @@ JOGAR_SAIR proc                     ; Verifica qual opcao esta marcada
         call ESCREVE_STRING
         
         call CARREGA_FASE
-        call PARTIDA
         
+        
+        inc fase
+        call DIMINUIR_VIDA
+        call PARTIDA
+        call CHECA_VIDAS
+        cmp fase,5 ;perdeu
+        je PERDEU
 
+        ;CHEGOU NO FINAL = GANHOU
+    
+    call LIMPA_TELA    
+    call ESCREVE_VENCEDOR
+    xor  AH, AH 
+    int  16h 
+    call LIMPA_TELA
+    call TERMINA_JOGO
+        
+    PERDEU:
+           call LIMPA_TELA
+           call ESCREVE_GAME_OVER
+           xor  AH, AH 
+           int  16h 
+           call LIMPA_TELA
+           call TERMINA_JOGO
+           
+    SAIR_JOGO:
     ret
 endp
 
@@ -542,6 +894,7 @@ INTERAGE_MENU proc      ; Verifica se houve alguma interacao na tela do menu
         cmp AH, 1CH     ; Enter
         jne VOLTAR_MENU
         call JOGAR_SAIR
+     
         
     VOLTAR_MENU:
         pop AX
@@ -552,8 +905,8 @@ BUSCA_INTERACAO proc ; Cria pausas para ver se houve interacao no teclado
     push CX
     push DX
     
-    xor CX, CX      ; Parte alta do tempo
-    mov DX, [fps]   ; Parte baixa do tempo
+    xor CX, CX      ; Inicia em 0
+    mov DX, DELAY_FRAME ; e vai at? delay
     mov AH, 86h
     int 15h
     
@@ -562,267 +915,11 @@ BUSCA_INTERACAO proc ; Cria pausas para ver se houve interacao no teclado
     ret
 endp
 
-UINT16_TO_STRING proc
-    push AX
-    push BX
-    push CX
-    push DX
-    
-    mov BX, 10    
-    xor CX, CX
-    
-    cmp AX, 10
-    jnl LACO_DIGITO2
-    
-    cmp AX, 0
-    je LACO_DIGITO2
-    
-    mov DL, '0'
-    mov [DI], DL
-    inc DI
-    
-  LACO_DIGITO2:    
-    xor DX, DX         
-    div BX
-    
-    push DX
-       
-    inc CX
-    
-    cmp AX, 0   
-        
-    jnz LACO_DIGITO2
-                          
-     
-  LACO_ESCRITA2:                    
-    pop DX
-    add DL, '0'
-    mov [DI], DL
-    inc DI
-    dec CX
-    cmp CX, 0
-    jnz LACO_ESCRITA2
-          
-          
-    pop DX
-    pop CX
-    pop BX
-    pop AX
-       
-    ret
-endp
-
-;Proc que diminui a quantidade de vidas na tela baseando-se 
-;em vidas_qtd
-DIMINUIR_VIDA proc
-    push AX
-    push BX
-    push CX
-    push DX
-    push DI
-    push ES
-    
-    mov AX, 0A000H
-    mov ES, AX
-    
-    xor BX,BX
-    xor AX,AX
-    
-    mov AL, vidas_qtd
-    cmp AL, 0
-    jz DIMINUIR_FIM ;se a quantidade de vidas = 0 entao pula
-    
-    dec AL ; 0..2
-    mov vidas_qtd, AL ;atualiza qtd
-    
-    mov BL,AL ;BL usado como indice
-    mov vidas[BX],0
-    
-    mov AL, vida_posicao_x[BX] ;DI = posicao atual da vida na tela
-    mov DI,AX
-    mov DX, 7 
-
-DIMINUIR_VIDA_LOOP:
-    mov CX,16
-    mov AL,0
-    rep stosb ;STOSB ESCREVE AL EM ES:DI, CX vezes
-    
-    add DI, 320-16
-    dec DX
-    jnz DIMINUIR_VIDA_LOOP
-    
-    
-DIMINUIR_FIM:
-    pop ES
-    pop DI
-    pop DX
-    pop CX
-    pop BX
-    pop AX
-    
-    ret
-endp
-
-MOSTRAR_VIDAS proc
-    push ax
-    push bx
-    push cx
-    push dx
-    push si
-
-       
-    xor  BX, BX
-    xor AX,AX
-    mov  CX, 3 ; tr?s vidas
-
-DESENHAR_LOOP2:
-      lea  si, vida  
-
-    
-      mov  AL, [vidas+bx]
-      cmp  AX, 0
-    je   PROXIMA_VIDA ; se destru?da, s? avan?a
-
-   
-    mov  AL, [vida_posicao_x+BX] ;vida_posicao_x = vetor de posicoes na tela de cada vida
-
-
-    ;AX = posicao na tela
-    ;SI = offset no .data do desenho da vida
-    call DESENHA_7x16
-
-PROXIMA_VIDA:
-    inc  bx
-    loop DESENHAR_LOOP2
-
-    pop  si
-    pop  dx
-    pop  cx
-    pop  bx
-    pop  ax
-    ret
-endp
-
-
-MOSTRAR_HEADER proc
-   mov BP, offset frase_score 
-   mov DH, 0
-   mov DL, 0
-   mov CX, score_tamanho 
-   mov BL, 0FH ;0FH = cor branco
-   call ESCREVE_STRING
-   
-   mov AX, pontos
-   mov DI, OFFSET pontos_string
-   call UINT16_TO_STRING
-   
-   mov BP, offset pontos_string
-   mov DH,0
-   mov DL, score_tamanho
-   mov CX, tamanho_pontos_string
-   mov BL, 02H ;cor verde escuro
-   call ESCREVE_STRING
-   
-   call MOSTRAR_VIDAS
-   
-   mov BP, offset frase_tempo
-   mov DH, 0
-   mov DL, 32
-   mov CX, tempo_tamanho
-   mov BL, 0FH 
-   call ESCREVE_STRING
-   
-   xor AX,AX
-   mov AL, cronometro
-   mov DI, offset cronometro_string
-   call UINT16_TO_STRING
-    
-   mov BP, OFFSET cronometro_string
-   mov DH, 0
-   mov DL, 38
-   mov CX, tamanho_cronometro_string
-   mov BL, 02H
-   call ESCREVE_STRING
-   
-   
-  ret
-endp
-;ZERA_VARIAVIES_SETOR proc
-;zera as naves aliens inimigas antes de entrar na proxima fase
-ZERAR_ALIENS proc
-    push AX
-    push CX
-    push DI
-    push ES
-    
-    mov AX, @data
-    mov ES,AX
-    lea DI,posicoes_aliens
-    mov CX, LENGTH posicoes_aliens 
-    xor AX,AX
-    cld ;garantindo DF = 0 (avan?ando )
-    
-    rep stosw ;escreve AX (0) em ES:DI, CX vezes
-    
-    pop ES
-    pop DI
-    pop CX
-    pop AX
-    ret
-
-endp
-;MOSTRA_SETOR proc
-; setar qual tela esta (1,2,3)
-INICIANDO_FASE proc
-    mov qtd_alien,0 ;inimigas_vivas_setor
-    mov qtd_meteoro,0 
-    mov tiro_flag,0
-    mov tiro_desloc, 0
-
-    call ZERAR_ALIENS
-    
-    cmp estado,1
-    je FASE_1
-    
-    ;cmp estado,2
-    ;je FASE_1
-    
-   ; cmp estado,3
-   ;je FASE_1
-    
-    
-   ; xor AX,AX
-   ;mov BX,30
-   ;call CALCULA_BONUS_SETOR
-   ;mov venceu, 1
-   ;call VENCEU_PERDEU
-FASE_1:
-    
-       mov qtd_alien,10 ;quantidade de aliens por fase  = mov naves_inimigas_restante_setor, naves_set1 
-  
-      call LIMPA_TELA
-        mov DH, 10
-        mov DL, 0
-        mov BL, 0FH
-        mov BP, offset arte_f1
-        mov CX, tamanho_f1
-        call ESCREVE_STRING
-        
-        call CARREGA_FASE
-        mov pontos,0
-        mov cronometro,tempo_fase
-        
-        mov nave_posicao,320*99 ;inicia nave no meio da tela
-        
-    ret
-endp
-
-
 JOGO proc                       ; Carrega a tela inicial do jogo (menu)
     call ESCREVE_TITULO
     call ESCREVE_BOTOES  
     call RESET_ALIEN_MENU  ;posiona nave alien em uma posicao aleatoria na tela
-    call RESET_POSICOES_MENU;posiciona nave e meteoro nas extremidades
+    call RESET_POSICOES_MENU    ;posiciona nave e meteoro nas extremidades
      
     MENU:
         call BUSCA_INTERACAO
@@ -844,7 +941,7 @@ ESCREVE_TITULO proc ;prepara registradores pra executar o call print
     
     mov BP, offset arte_titulo
     mov CX, tamanho_arte
-    mov BL, 02H ;representa a cor verde
+    mov BL, 0AH ;representa a cor verde
     xor DX,DX ;zerando o registrador DX -> DH=linha/DL=coluna
     
     call ESCREVE_STRING      
@@ -852,6 +949,57 @@ ESCREVE_TITULO proc ;prepara registradores pra executar o call print
     ret
 endp 
     
+
+ESCREVE_VENCEDOR proc
+    mov AX,DS
+    mov ES,AX
+    
+    mov BP, offset arte_vencedor
+    mov CX, tamanho_arte_vencedor
+    mov BL, 0AH; cor verde
+    xor DX,DX
+    mov DH,10 ;linha = 18
+    call ESCREVE_STRING
+    
+    
+    mov BP, offset pontuacao_frase
+    mov CX, tamanho_pontuacao_frase
+    mov BL, 0FH
+    xor DX,DX
+    mov DH,15 ; DH - linha / DL - coluna
+    mov DL,12
+    call ESCREVE_STRING
+     
+     ; Pontuacao atual
+    mov AX, [pontuacao]
+    mov DH, 15
+    mov DL, 22
+    mov CX, NUMERO_DIGITOS_PONTOS
+    call ESCREVE_NUMERO
+
+    
+    
+    ret
+endp
+
+
+
+
+ESCREVE_GAME_OVER proc
+    
+    mov AX,DS
+    mov ES,AX
+    
+    mov BP, offset arte_game_over
+    mov CX, tamanho_arte_game_over
+    mov BL, 0AH; cor verde
+    xor DX,DX
+    mov DH,7 ;linha = 18
+    call ESCREVE_STRING
+
+  ret
+endp
+
 ESCREVE_BOTOES proc
     push AX
     
@@ -867,8 +1015,8 @@ ESCREVE_BOTOES proc
         mov BP, offset btn_jogar 
         mov CX, tamanho_jogar
         
-        xor DL,DL ;coluna = 0 
-        mov DH,18 ;linha = 18 
+        xor DL,DL ;coluna = 0 | Modo 13h (320?200): grade 40?25 (colunas 0..39, linhas 0..24).
+        mov DH,18 ;linha = 18 |
         call ESCREVE_STRING
         
         mov BL, 0FH
@@ -990,39 +1138,39 @@ RESET_ALIEN_MENU proc
     jae Y_OK 
     mov AL,90;come??a depois do meteoro
      
-Y_OK:
-    xor DX,DX
-    mov DL,AL
-    mov alien_y,DX ;passa altura minima para Y
+    Y_OK:
+        xor DX,DX
+        mov DL,AL
+        mov alien_y,DX ;passa altura minima para Y
+        
+        mov AH,255 ; max largura
+        call RAND_8
+        
+        cmp AL,50 ;coluna minima 29
+        jae X_OK
+        mov AL,50
+    X_OK:
+        xor DX,DX
+        mov DL,AL
+        mov alien_x,DX ;coluna minima para X
+        
+        
+        mov BX,320 ;adiciona 320 que o maximo de deslocamento por linha
+        
+        mov AX,alien_y ; move o valor em alien_y para AX
+        mul BX ;multiplica alien_y em AX para obter a linha correta, ja que a formula de deslocamento ? Y*320 + X
+        
+        add AX,alien_x
     
-    mov AH,255 ; max largura
-    call RAND_8
-    
-    cmp AL,50 ;coluna minima 29
-    jae X_OK
-    mov AL,50
-X_OK:
-    xor DX,DX
-    mov DL,AL
-    mov alien_x,DX ;coluna minima para X
-    
-    
-    mov BX,320 ;adiciona 320 que o maximo de deslocamento por linha
-    
-    mov AX,alien_y ; move o valor em alien_y para AX
-    mul BX ;multiplica alien_y em AX para obter a linha correta, ja que a formula de deslocamento ? Y*320 + X
-       
-    add AX,alien_x
-  
-    mov alien_posicao, AX
-    
-    mov alien_direction,1
+        mov alien_posicao, AX
+        
+        mov alien_direction,1
 
-    
+        
 
-    pop BX
-    pop DX
-    pop AX
+        pop BX
+        pop DX
+        pop AX
     
    ret
 endp 
@@ -1102,6 +1250,7 @@ DESENHA proc
     ret
 endp
 
+
 ; AX = posicao atual do elemento
 ; SI = offset do elemento no DS
 DESENHA_7x16 proc
@@ -1146,6 +1295,98 @@ DESENHA_7x16 proc
 endp
 
 
+;Proc que diminui a quantidade de vidas do header baseando-se 
+;em vidas_qtd
+DIMINUIR_VIDA proc
+    push AX
+    push BX
+    push CX
+    push DX
+    push DI
+    push ES
+    
+    mov AX, 0A000H
+    mov ES, AX
+    
+    xor BX,BX
+    xor AX,AX
+    
+    mov AL, vidas_qtd
+    cmp AL, 0
+    jz DIMINUIR_FIM ;se a quantidade de vidas = 0 entao pula
+    
+    dec AL ; 0..2
+    mov vidas_qtd, AL ;atualiza qtd
+    
+    mov BL,AL ;BL usado como indice
+    mov vidas_vetor[BX],0
+    
+    mov AL, vida_posicao_x[BX] ;DI = posicao atual da vida na tela
+    mov DI,AX
+    mov DX, 7 
+
+DIMINUIR_VIDA_LOOP:
+    mov CX,16
+    mov AL,0
+    rep stosb ;STOSB ESCREVE AL EM ES:DI, CX vezes
+    
+    add DI, 320-16
+    dec DX
+    jnz DIMINUIR_VIDA_LOOP
+    
+    
+DIMINUIR_FIM:
+    pop ES
+    pop DI
+    pop DX
+    pop CX
+    pop BX
+    pop AX
+    
+    ret
+endp
+
+MOSTRAR_VIDAS proc
+    push ax
+    push bx
+    push cx
+    push dx
+    push si
+
+       
+    xor  BX, BX
+    xor AX,AX
+    mov  CX, 3 ; tr?s vidas
+
+DESENHAR_LOOP2:
+      lea  si, vida  
+
+    
+      mov  AL, [vidas_vetor+bx]
+      cmp  AX, 0
+    je   PROXIMA_VIDA ; se destru?da, s? avan?a
+
+   
+    mov  AL, [vida_posicao_x+BX] ;vida_posicao_x = vetor de posicoes na tela de cada vida
+
+
+    ;AX = posicao na tela
+    ;SI = offset no .data do desenho da vida
+    call DESENHA_7x16
+
+PROXIMA_VIDA:
+    inc  bx
+    loop DESENHAR_LOOP2
+
+    pop  si
+    pop  dx
+    pop  cx
+    pop  bx
+    pop  ax
+    ret
+endp
+
+
 MENU_ANIMATION proc
     MOVE_NAVE:
         mov AX, nave_posicao
@@ -1161,8 +1402,6 @@ MENU_ANIMATION proc
         
         mov SI, offset nave ;prepara SI para MOVSB Move de DS:SI -> ES:DI
         call DESENHA; RENDER_SPRITE
-    
-      
     
     MOVE_METEORO:
         mov AX, meteoro_posicao
@@ -1182,8 +1421,7 @@ MENU_ANIMATION proc
         mov SI, offset meteoro
         call DESENHA; RENDER_SPRIT
         
-        
-      
+     
      MOVE_ALIEN:
     
      mov DX,alien_direction
@@ -1207,18 +1445,18 @@ MENU_ANIMATION proc
         dec alien_x
         
         mov SI, offset alien
-        call DESENHA; RENDER_SPRIT
+        call DESENHA
         
         jmp END_POS_UPDATE
         
- ALIEN_DIREITA:
+    ALIEN_DIREITA:
         mov AX, alien_posicao
         mov DI, AX;move a posicao do aliwn para DI
         mov DX,alien_x  
         ;push AX
         cmp DX,291 ;Chegou na borda da esquerda     
         ;pop AX     
-        je RESET_ALIEN_DIRECTION_2
+        je RESET_ALIEN
         
         call LIMPA_13x29; apaga 13x29 na posicao DI.
             
@@ -1229,60 +1467,112 @@ MENU_ANIMATION proc
         
         mov SI, offset alien
         call DESENHA; RENDER_SPRIT 
-         jmp END_POS_UPDATE
+        jmp END_POS_UPDATE
     
-  RESET_ALIEN_DIRECTION:
+    RESET_ALIEN_DIRECTION:
         mov alien_direction,2
         jmp END_POS_UPDATE
         
-    RESET_ALIEN_DIRECTION_2:
+    RESET_ALIEN:
+        call LIMPA_13x29
         mov alien_direction,1
         jmp END_POS_UPDATE
         
-  RESET_NAVE_METEORO:
+    RESET_NAVE_METEORO:
         call LIMPA_13x29; apaga 13x29 na posicao DI.
         call RESET_POSICOES_MENU 
     
     END_POS_UPDATE:
-      ret
+        ret
 endp
 
 
-SLEEP_LENTO proc 
-    push CX
-    push DX
-    push AX
-          
-    mov AX, 0          ; zera lixo em AX (opcional)
-    mov CX, 0FH          ; parte alta -> 0x0007
-    mov DX, 0A120H    ; parte baixa -> 0xA120
-    ; 0x0007A120 = 500.000 ?s ? 0,5 segundo
+;PROCS TERRENO:
 
-    mov AH, 86h        ; BIOS wait
-    int 15h
-
-    pop AX
-    pop DX
-    pop CX
-    ret
-SLEEP_LENTO endp
-
-; recebe em CX:DX o tempo de espera
-SLEEP proc 
-    push CX                 ;salva contexto
-    push DX             
-    push AX             
-      
-    xor CX, CX              ;zera CX, pois o tempo e definido por CX:DX
-    mov DX, fps             ;espera
-    mov AH, 86h             ;configura o modo de espera
-    int 15h                 ;chama a espera no sistema
+TERRENO_DESENHA proc
+    push cx
+    push dx
+    push si
+    push di
+    push ax
+    
+    mov ax, 0A000H       
+    mov es, ax                  
     
     pop AX
-    pop DX
-    pop CX
+    
+    add si, scroll_cenario          ; Aplica o deslocamento para o cenario
+
+PRINTA_CENARIO:
+    mov di, DX               ;  offset da linha 
+    mov dx, AX                  ; Numero de linhas a desenhar
+desenha_linha_ter:
+    mov cx, 320                 ; N?mero de pixels por linha
+    rep movsb                   ; Copia a linha do cen?rio para a tela
+
+    add si, 160                 ; Avan?a o ponteiro no cen?rio para a pr?xima linha (480 - 320 = 160 que ?  parte que faltou desenhar)
+    dec dx                      ; Decrementa o contador de linhas
+    jnz desenha_linha_ter       ; Continua enquanto houver linhas a desenhar
+
+END_PROC:
+    pop di
+    pop si
+    pop dx
+    pop cx
+    pop ax
     ret
-endp
+ENDP
+
+;PARAMS
+; AX = ALTURA DO TERRENO
+;SI = OFFSET DO TERRENO
+;DX = LINHA INICIAL DO DESENHO
+TERRENO_MOV proc   
+    add scroll_cenario,3       ; Incrementa o deslocamento (move o inicio do desenho pra esquerda ), quanto maior o valor aqui, mais rapido parece que o cenario se movimenta10
+
+    cmp scroll_cenario, 480         ; Se desloc_cen >= 480, reseta o cen?rio
+    jl continua_movimento       ; Se desloc_cen < 480, continua o movimento
+
+    mov scroll_cenario, 0           ; Reseta o deslocamento ao ultrapassar o limite
+
+continua_movimento:
+   
+    call TERRENO_DESENHA        ; Chama a fun??o para desenhar o cen?rio atualizado
+ 
+    ret
+ENDP
+
+
+; PARAMS:
+;   DS:SI -> buffer do terreno (in-place)
+;   BH    -> cor_alvo (a que ser? substitu?da)
+;   BL    -> cor_nova
+; Efeitos: altera apenas bytes == cor_alvo
+TERRENO_TROCA_COR PROC
+    PUSH AX
+    PUSH BX
+    PUSH CX
+    PUSH SI
+
+    MOV CX, 480*50
+
+    CLD                     ; garantir SI++
+
+TERRENO_TROCA_LOOP:
+
+    LODSB                   ; AL = [DS:SI], SI++
+    CMP   AL, BH            ; ? a cor-alvo?
+    JNE   PULA_ESCRITA_COR
+    MOV   [SI-1], BL        ; substitui por cor_nova asdads
+PULA_ESCRITA_COR:
+    LOOP  TERRENO_TROCA_LOOP
+
+    POP SI
+    POP CX 
+    POP BX
+    POP AX
+    RET
+TERRENO_TROCA_COR ENDP
 
 
 
@@ -1302,14 +1592,10 @@ MAIN:
     mov AL, 13H
     int 10H
     
-    ;call JOGO
-    mov CX,3
     
-TESTE:
-    call MOSTRAR_HEADER
-    call SLEEP_LENTO
-    call DIMINUIR_VIDA
-    loop TESTE
-
+    
+    call JOGO
+    
+    
     
 end MAIN
