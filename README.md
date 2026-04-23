@@ -1,30 +1,30 @@
-> Projeto desenvolvido como trabalho acadêmico, com foco em compreensão prática de arquitetura de computadores e programação em baixo nível utilizando Assembly 8086.
+> Trabalho acadêmico, com foco em compreensão prática de arquitetura de computadores e programação em baixo nível utilizando Assembly 8086.
 
 # 🚀 Projeto Assembly: Jogo Scramble (1981)
 
 TDE-B da matéria de Arquitetura de Computadores - 2025/04
-Desenvolvido por **Henrique Britz Hahn** & **João Paulo Escobar Martins**
-
----
+Desenvolvido por **Henrique Britz Hahn** & **João Paulo Escobar Martins**.
+Projeto desenvolvido em **Assembly 8086** que implementa um jogo com interface gráfica em modo VGA (13h), incluindo menu interativo, animações, sprites e controle de estado do jogo.
 
 Onde instalar o TASM: [Gui Turbo Assembler](https://sourceforge.net/projects/guitasm8086/)
 
-# 🎮 Jogo em Assembly (Intel 8086 - Modo Real)
 
-Projeto desenvolvido em **Assembly 8086** que implementa um jogo com interface gráfica em modo VGA (13h), incluindo menu interativo, animações, sprites e controle de estado do jogo.
+---
+
 
 
 ## 🎬 Referência
 
-[![Assista no YouTube](https://img.youtube.com/vi/3Vc-RIkpk40/0.jpg)](https://www.youtube.com/watch?v=3Vc-RIkpk40)
+Vídeo do jogo original:  
+https://www.youtube.com/watch?v=3Vc-RIkpk40
 
 ## 🖼️ Demonstração
 
 ### Tela inicial
-![Tela inicial](./assets/tela-inicial.png)
+![Tela inicial](./projeto-scrumble/assets/tela-inicial.png)
 
 ### Fase 1
-![Fase 1](./assets/fase1.png)
+![Fase 1](./projeto-scrumble/assets/fase1.png)
 
 ## 📌 Sobre o projeto
 
