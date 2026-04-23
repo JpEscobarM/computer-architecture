@@ -69,9 +69,10 @@ O jogo conta com:
 
 ```bash
 .
-├── tde.asm           # Código principal do jogo
-├── requisitos.md     # Descrição dos requisitos
-├── descricao.pdf     # Documentação do projeto
+├── projeto-scrumble/
+│   ├── tde.asm           # Código principal do jogo
+│   ├── requisitos.md     # Descrição dos requisitos
+│   └── descricao.pdf     # Documentação do projeto
 └── README.md
 ```
 ## ▶️ Como executar
