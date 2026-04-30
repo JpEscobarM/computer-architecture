@@ -1,5 +1,3 @@
-> Trabalho acadêmico, com foco em compreensão prática de arquitetura de computadores e programação em baixo nível utilizando Assembly 8086.
-
 # 🚀 Projeto Assembly: Jogo Scramble (1981)
 
 TDE-B da matéria de Arquitetura de Computadores - 2025/04
